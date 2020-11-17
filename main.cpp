@@ -1,6 +1,25 @@
 #include <cmath>
+#include <ctime>
 #include <fstream>
 #include <iostream>
+#include <string>
+
+std::string getTimestamp() {
+    std::time_t time = std::time(nullptr);
+    char stime[20];
+    std::strftime(stime, sizeof(stime), "%Y-%m-%d %H:%M:%S", std::localtime(&time));
+    return std::string(stime);
+}
+
+template <typename T>
+void LOG(T message) {
+    std::cout << getTimestamp() << " : " << message << std::endl;
+}
+
+template <typename T>
+void LOG_ERR(T message) {
+    std::cerr << getTimestamp() << " : " << message << std::endl;
+}
 
 class Function4D {
    public:
@@ -120,7 +139,8 @@ class Solver {
      * */
     void makeStep(int n) {
         if (n < 2 || n >= grid.T) {
-            std::cerr << "Parameter n in makeStep must be between 2 and T. Actual value: " << n << std::endl;
+            LOG_ERR("Parameter n in makeStep must be between 2 and T. Actual value: ");
+            LOG_ERR(n);
         }
 
         // Inner nodes
@@ -209,6 +229,7 @@ int main(int argc, char **argv) {
     }
 
     std::ofstream outFile(argv[7], std::ios::out | std::ios::binary);
+    LOG("Output file created");
 
     double L_x = atof(argv[1]);
     double L_y = atof(argv[2]);
@@ -216,16 +237,24 @@ int main(int argc, char **argv) {
     double T = atof(argv[4]);
     int N = atoi(argv[5]);
     int K = atoi(argv[6]);
+    LOG("Papameters parsed succesfully");
 
     Phi phi(L_x, L_y, L_z);
     U u(L_x, L_y, L_z);
+    LOG("Phi and U created");
 
     Solver solver(K, L_x, L_y, L_z, N, K, (Function4D *)&u, (Function3D *)&phi);
+    LOG("Solver created");
+    LOG("Initialization successfully completed");
 
+    LOG("Solving start");
     solver.solve();
+    LOG("Solving complete");
 
+    LOG("Writing result to file");
     solver.grid.writeToFile(outFile);
     outFile.close();
+    LOG("Result written");
 
     return 0;
 }
