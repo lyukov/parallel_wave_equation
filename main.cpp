@@ -4,6 +4,8 @@
 #include <iostream>
 #include <string>
 
+using std::endl;
+
 std::string getTimestamp() {
     std::time_t time = std::time(nullptr);
     char stime[20];
@@ -11,15 +13,8 @@ std::string getTimestamp() {
     return std::string(stime);
 }
 
-template <typename T>
-void LOG(T message) {
-    std::cout << getTimestamp() << " : " << message << std::endl;
-}
-
-template <typename T>
-void LOG_ERR(T message) {
-    std::cerr << getTimestamp() << " : " << message << std::endl;
-}
+#define LOG std::cout << getTimestamp() << " : "
+#define LOG_ERR std::cerr << getTimestamp() << " : "
 
 class Function4D {
    public:
@@ -68,14 +63,22 @@ class Grid {
           size(K * N * N * N)  // May overflow ?
     {
         raw = new double[size];
+        LOG << "Created raw array of size " << size << endl;
     }
 
     ~Grid() {
-        if (raw) delete raw;
+        if (raw) {
+            delete raw;
+            LOG << "Deleted raw array of size " << size << endl;
+        }
     }
 
     double &operator()(int n, int i, int j, int k) {
-        return raw[n * (N * N * N) + i * (N * N) + j * N + k];
+        int idx = n * (N * N * N) + i * (N * N) + j * N + k;
+        if (idx >= size) {
+            LOG_ERR << "Index out of bounds " << idx << endl;
+        }
+        return raw[idx];
     }
 
     void writeToFile(std::ofstream &outFile) const {
@@ -83,7 +86,7 @@ class Grid {
     }
 };
 
-double laplasian(Grid g, int n, int i, int j, int k) {
+double laplasian(Grid &g, int n, int i, int j, int k) {
     double center = g(n, i, j, k);
     return (g(n, i - 1, j, k) - 2.0 * center + g(n, i + 1, j, k)) / g.h_x +
            (g(n, i, j - 1, k) - 2.0 * center + g(n, i, j + 1, k)) / g.h_y +
@@ -119,6 +122,7 @@ class Solver {
                 }
             }
         }
+        LOG << "Level 0 initialized\n";
 
         // Initialize first level
         for (int i = 0; i < N; ++i) {
@@ -132,15 +136,15 @@ class Solver {
                 }
             }
         }
+        LOG << "Level 1 initialized\n";
     }
 
     /**
      *  makeStep fills n-th layer of grid. It depends on two previous layers.
      * */
     void makeStep(int n) {
-        if (n < 2 || n >= grid.T) {
-            LOG_ERR("Parameter n in makeStep must be between 2 and T. Actual value: ");
-            LOG_ERR(n);
+        if (n < 2 || n >= grid.K) {
+            LOG_ERR << "Parameter n in makeStep must be between 2 and T. Actual value: " << n << endl;
         }
 
         // Inner nodes
@@ -177,11 +181,14 @@ class Solver {
                 }
             }
         }
+
+        LOG << "Step " << n << " completed" << endl;
     }
 
     void solve() {
+        LOG << "Start solve()\n";
         init();
-        for (int step = 2; step < grid.T; ++step) {
+        for (int step = 2; step < grid.K; ++step) {
             makeStep(step);
         }
     }
@@ -224,12 +231,12 @@ class Phi : Function3D {
 
 int main(int argc, char **argv) {
     if (argc <= 7) {
-        std::cout << "Usage: prog L_x L_y L_z T N K out_file" << std::endl;
+        LOG_ERR << "Usage: prog L_x L_y L_z T N K out_file" << endl;
         return 0;
     }
 
     std::ofstream outFile(argv[7], std::ios::out | std::ios::binary);
-    LOG("Output file created");
+    LOG << "Output file created\n";
 
     double L_x = atof(argv[1]);
     double L_y = atof(argv[2]);
@@ -237,24 +244,23 @@ int main(int argc, char **argv) {
     double T = atof(argv[4]);
     int N = atoi(argv[5]);
     int K = atoi(argv[6]);
-    LOG("Papameters parsed succesfully");
+    LOG << "Papameters parsed succesfully\n";
 
     Phi phi(L_x, L_y, L_z);
     U u(L_x, L_y, L_z);
-    LOG("Phi and U created");
+    LOG << "Phi and U created\n";
 
     Solver solver(K, L_x, L_y, L_z, N, K, (Function4D *)&u, (Function3D *)&phi);
-    LOG("Solver created");
-    LOG("Initialization successfully completed");
+    LOG << "Solver created\n";
+    LOG << "Initialization successfully completed\n";
 
-    LOG("Solving start");
     solver.solve();
-    LOG("Solving complete");
+    LOG << "Solving complete\n";
 
-    LOG("Writing result to file");
+    LOG << "Writing result to file\n";
     solver.grid.writeToFile(outFile);
     outFile.close();
-    LOG("Result written");
+    LOG << "Result written\n";
 
     return 0;
 }
