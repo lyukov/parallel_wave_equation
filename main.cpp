@@ -1,4 +1,5 @@
 #include <cmath>
+#include <cstring>
 #include <ctime>
 #include <fstream>
 #include <iostream>
@@ -75,9 +76,6 @@ class Grid {
 
     double &operator()(int n, int i, int j, int k) {
         int idx = n * (N * N * N) + i * (N * N) + j * N + k;
-        if (idx >= size) {
-            LOG_ERR << "Index out of bounds " << idx << endl;
-        }
         return raw[idx];
     }
 
@@ -101,14 +99,14 @@ class Solver {
     const int K;
 
    public:
-    Grid grid;
+    Grid &grid;
 
-    Solver(double T, double L_x, double L_y, double L_z, int N, int K, Function4D *u, Function3D *phi)
+    Solver(double T, double L_x, double L_y, double L_z, int N, int K, Grid &grid, Function4D *u, Function3D *phi)
         : N(N),
           K(K),
           u(u),
           phi(phi),
-          grid(T, L_x, L_y, L_z, N, K) {}
+          grid(grid) {}
 
     void init() {
         // Initialize zero level
@@ -182,7 +180,9 @@ class Solver {
             }
         }
 
-        LOG << "Step " << n << " completed" << endl;
+        if ((n + 1) % 10 == 0) {
+            LOG << "Step " << n + 1 << " completed" << endl;
+        }
     }
 
     void solve() {
@@ -229,36 +229,58 @@ class Phi : Function3D {
     }
 };
 
+void fillByF(Grid &grid, Function4D *f) {
+    for (int n = 0; n < grid.K; ++n) {
+        for (int i = 0; i < grid.N; ++i) {
+            for (int j = 0; j < grid.N; ++j) {
+                for (int k = 0; k < grid.N; ++k) {
+                    grid(n, i, j, k) = (*f)(
+                        grid.tau * n,
+                        grid.h_x * i,
+                        grid.h_y * j,
+                        grid.h_z * k);
+                }
+            }
+        }
+    }
+}
+
 int main(int argc, char **argv) {
-    if (argc <= 7) {
-        LOG_ERR << "Usage: prog L_x L_y L_z T N K out_file" << endl;
+    if (argc <= 8) {
+        LOG_ERR << "Usage: prog gt|num L_x L_y L_z T N K out_file" << endl;
         return 0;
     }
 
-    std::ofstream outFile(argv[7], std::ios::out | std::ios::binary);
+    std::ofstream outFile(argv[8], std::ios::out | std::ios::binary);
     LOG << "Output file created\n";
 
-    double L_x = atof(argv[1]);
-    double L_y = atof(argv[2]);
-    double L_z = atof(argv[3]);
-    double T = atof(argv[4]);
-    int N = atoi(argv[5]);
-    int K = atoi(argv[6]);
+    double L_x = atof(argv[2]);
+    double L_y = atof(argv[3]);
+    double L_z = atof(argv[4]);
+    double T = atof(argv[5]);
+    int N = atoi(argv[6]);
+    int K = atoi(argv[7]);
     LOG << "Papameters parsed succesfully\n";
 
     Phi phi(L_x, L_y, L_z);
     U u(L_x, L_y, L_z);
     LOG << "Phi and U created\n";
 
-    Solver solver(K, L_x, L_y, L_z, N, K, (Function4D *)&u, (Function3D *)&phi);
-    LOG << "Solver created\n";
-    LOG << "Initialization successfully completed\n";
+    Grid grid(T, L_x, L_y, L_z, N, K);
 
-    solver.solve();
-    LOG << "Solving complete\n";
+    if (strcmp(argv[1], "num") == 0) {
+        Solver solver(K, L_x, L_y, L_z, N, K, grid, (Function4D *)&u, (Function3D *)&phi);
+        LOG << "Solver created\n";
+        LOG << "Initialization successfully completed\n";
+
+        solver.solve();
+        LOG << "Solving complete\n";
+    } else {
+        fillByF(grid, (Function4D *)&u);
+    }
 
     LOG << "Writing result to file\n";
-    solver.grid.writeToFile(outFile);
+    grid.writeToFile(outFile);
     outFile.close();
     LOG << "Result written\n";
 
