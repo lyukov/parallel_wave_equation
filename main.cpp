@@ -13,46 +13,25 @@
 using std::endl;
 
 std::string getTimestamp() {
-    std::time_t time = std::time(nullptr);
+    std::time_t time = std::time(NULL);
     char stime[20];
     std::strftime(stime, sizeof(stime), "%Y-%m-%d %H:%M:%S", std::localtime(&time));
     return std::string(stime);
 }
 
-class U : public Function4D {
-    const double L_x;
-    const double L_y;
-    const double L_z;
-    const double a_t;
-
-   public:
-    U(double L_x, double L_y, double L_z)
-        : L_x(L_x),
-          L_y(L_y),
-          L_z(L_z),
+U::U(double L_x, double L_y, double L_z)
+        : L_x(L_x), L_y(L_y), L_z(L_z),
           a_t(M_PI * sqrt(4.0 / (L_x * L_x) + 1.0 / (L_y * L_y) + 1.0 / (L_z * L_z))) {}
 
-    double operator()(double t, double x, double y, double z) const {
-        return sin(M_2_PI * x / L_x) * sin(M_PI * y / L_y) * sin(M_2_PI * z / L_z) * cos(a_t * t);
-    }
-};
+double U::operator()(double t, double x, double y, double z) const {
+    return sin(M_2_PI * x / L_x) * sin(M_PI * y / L_y) * sin(M_2_PI * z / L_z) * cos(a_t * t);
+}
 
-class Phi : public Function3D {
-    double L_x;
-    double L_y;
-    double L_z;
+Phi::Phi(double L_x, double L_y, double L_z) : L_x(L_x), L_y(L_y), L_z(L_z) {}
 
-   public:
-    Phi(double L_x, double L_y, double L_z) {
-        this->L_x = L_x;
-        this->L_y = L_y;
-        this->L_z = L_z;
-    }
-
-    double operator()(double x, double y, double z) const {
-        return sin(M_2_PI * x / L_x) * sin(M_PI * y / L_y) * sin(M_2_PI * z / L_z);
-    }
-};
+double Phi::operator()(double x, double y, double z) const {
+    return sin(M_2_PI * x / L_x) * sin(M_PI * y / L_y) * sin(M_2_PI * z / L_z);
+}
 
 int main(int argc, char **argv) {
     if (argc <= 8) {
