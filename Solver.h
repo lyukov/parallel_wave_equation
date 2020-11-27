@@ -10,12 +10,6 @@ class Solver {
     const int N;
     const int K;
 
-    /* Parameters of continuous problem */
-    const double T;
-    const double L_x;
-    const double L_y;
-    const double L_z;
-
     /* Grid steps */
     const double h_x;
     const double h_y;
@@ -29,12 +23,12 @@ public:
 
     void init_1(Grid3D &grid);
 
-    double laplasian(const Grid3D &g, int i, int j, int k) const;
+    double laplacian(const Grid3D &g, int i, int j, int k) const;
 
     /** Fills n-th layer of grid. It depends on two previous layers. */
-    void makeStep(const int n, Grid3D &layer, const Grid3D &previous_1, const Grid3D &previous_2) const;
+    void makeStep(Grid3D &layer, const Grid3D &previous_1, const Grid3D &previous_2) const;
 
     Grid3D *solve();
 
-    void fillByF(Grid3D &grid, Function4D *f, int n);
+    void fillByF(Grid3D &grid, Function4D *f, int n) const;
 };

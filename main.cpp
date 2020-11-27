@@ -1,7 +1,6 @@
 #include <cmath>
 #include <cstring>
 #include <ctime>
-#include <fstream>
 #include <iostream>
 #include <string>
 
@@ -54,7 +53,7 @@ int main(int argc, char **argv) {
     U u(L_x, L_y, L_z);
     LOG << "Phi and U created\n";
 
-    Solver solver(K, L_x, L_y, L_z, N, K, &u, &phi);
+    Solver solver(T, L_x, L_y, L_z, N, K, &u, &phi);
     LOG << "Solver created\n";
     LOG << "Initialization successfully completed\n";
     Grid3D *grid;

@@ -21,7 +21,7 @@ class Grid3D {
 public:
     const int size;
 
-    Grid3D(int N);
+    explicit Grid3D(int N);
 
     Grid3D(int N1, int N2, int N3);
 
