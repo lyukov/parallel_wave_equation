@@ -27,12 +27,48 @@ class Function3D {
     virtual double operator()(double x, double y, double z) const = 0;
 };
 
-class Grid {
+class Grid3D {
     /* Raw data */
     double *raw;
 
+    const int _N;
+
    public:
-    /* Grid size is K * N * N * N */
+    /* Grid size is (N + 1) ^ 3 */
+    const int N;
+    const int size;
+
+    Grid3D(int N) : N(N), _N(N + 1), size(_N * _N * _N) {
+        raw = new double[size];
+        LOG << "Created raw array of size " << size << endl;
+    }
+
+    ~Grid3D() {
+        if (raw) {
+            delete raw;
+            LOG << "Deleted raw array of size " << size << endl;
+        }
+    }
+
+    double &operator()(int i, int j, int k) {
+        int idx = i * (_N * _N) + j * _N + k;
+        return raw[idx];
+    }
+
+    double operator()(int i, int j, int k) const {
+        int idx = i * (_N * _N) + j * _N + k;
+        return raw[idx];
+    }
+
+    void writeToFile(std::ofstream &outFile) const {
+        outFile.write((char *)raw, size * sizeof(double));
+    }
+};
+
+class Solver {
+    const Function4D *const u;
+    const Function3D *const phi;
+
     const int N;
     const int K;
 
@@ -48,153 +84,138 @@ class Grid {
     const double h_z;
     const double tau;
 
-    const int size;
-
-    Grid(double T, double L_x, double L_y, double L_z, int N, int K)
-        : T(T),
-          L_x(L_x),
-          L_y(L_y),
-          L_z(L_z),
-          N(N),
-          K(K),
-          h_x(L_x / N),
-          h_y(L_y / N),
-          h_z(L_z / N),
-          tau(T / K),
-          size(K * N * N * N)  // May overflow ?
-    {
-        raw = new double[size];
-        LOG << "Created raw array of size " << size << endl;
-    }
-
-    ~Grid() {
-        if (raw) {
-            delete raw;
-            LOG << "Deleted raw array of size " << size << endl;
-        }
-    }
-
-    double &operator()(int n, int i, int j, int k) {
-        int idx = n * (N * N * N) + i * (N * N) + j * N + k;
-        return raw[idx];
-    }
-
-    void writeToFile(std::ofstream &outFile) const {
-        outFile.write((char *)raw, size * sizeof(double));
-    }
-};
-
-double laplasian(Grid &g, int n, int i, int j, int k) {
-    double center = g(n, i, j, k);
-    return (g(n, i - 1, j, k) - 2.0 * center + g(n, i + 1, j, k)) / g.h_x +
-           (g(n, i, j - 1, k) - 2.0 * center + g(n, i, j + 1, k)) / g.h_y +
-           (g(n, i, j, k - 1) - 2.0 * center + g(n, i, j, k + 1)) / g.h_z;
-}
-
-class Solver {
-    const Function4D *const u;
-    const Function3D *const phi;
-
-    const int N;
-    const int K;
-
    public:
-    Grid &grid;
-
-    Solver(double T, double L_x, double L_y, double L_z, int N, int K, Grid &grid, Function4D *u, Function3D *phi)
+    Solver(double T, double L_x, double L_y, double L_z, int N, int K, Function4D *u, Function3D *phi)
         : N(N),
           K(K),
           u(u),
           phi(phi),
-          grid(grid) {}
+          T(T),
+          L_x(L_x),
+          L_y(L_y),
+          L_z(L_z),
+          h_x(L_x / N),
+          h_y(L_y / N),
+          h_z(L_z / N),
+          tau(T / K) {}
 
-    void init() {
+    void init_0(Grid3D &grid) {
         // Initialize zero level
-        for (int i = 0; i < N; ++i) {
-            for (int j = 0; j < N; ++j) {
-                for (int k = 0; k < N; ++k) {
-                    grid(0, i, j, k) = (*phi)(
-                        grid.h_x * i,
-                        grid.h_y * j,
-                        grid.h_z * k);
+        for (int i = 0; i <= N; ++i) {
+            for (int j = 0; j <= N; ++j) {
+                for (int k = 0; k <= N; ++k) {
+                    grid(i, j, k) = (*phi)(
+                        h_x * i,
+                        h_y * j,
+                        h_z * k);
                 }
             }
         }
         LOG << "Level 0 initialized\n";
+    }
 
+    void init_1(Grid3D &grid) {
         // Initialize first level
-        for (int i = 0; i < N; ++i) {
-            for (int j = 0; j < N; ++j) {
-                for (int k = 0; k < N; ++k) {
-                    grid(1, i, j, k) = (*u)(  // TODO: initialize without using u
-                        grid.tau,
-                        grid.h_x * i,
-                        grid.h_y * j,
-                        grid.h_z * k);
+        for (int i = 0; i <= N; ++i) {
+            for (int j = 0; j <= N; ++j) {
+                for (int k = 0; k <= N; ++k) {
+                    grid(i, j, k) = (*u)(  // TODO: initialize without using u
+                        tau,
+                        h_x * i,
+                        h_y * j,
+                        h_z * k);
                 }
             }
         }
         LOG << "Level 1 initialized\n";
     }
 
-    /**
-     *  makeStep fills n-th layer of grid. It depends on two previous layers.
-     * */
-    void makeStep(int n) {
-        if (n < 2 || n >= grid.K) {
+    double laplasian(const Grid3D &g, int i, int j, int k) {
+        double center = g(i, j, k);
+        return (g(i - 1, j, k) - 2.0 * center + g(i + 1, j, k)) / h_x +
+               (g(i, j - 1, k) - 2.0 * center + g(i, j + 1, k)) / h_y +
+               (g(i, j, k - 1) - 2.0 * center + g(i, j, k + 1)) / h_z;
+    }
+
+    /** makeStep fills n-th layer of grid. It depends on two previous layers. */
+    void makeStep(const int n, Grid3D &layer, const Grid3D &previous_1, const Grid3D &previous_2) {
+        if (n < 2 || n >= K) {
             LOG_ERR << "Parameter n in makeStep must be between 2 and T. Actual value: " << n << endl;
         }
 
         // Inner nodes
-        for (int i = 1; i < N - 1; ++i) {
-            for (int j = 1; j < N - 1; ++j) {
-                for (int k = 1; k < N - 1; ++k) {
-                    grid(n, i, j, k) = 2 * grid(n - 1, i, j, k) -
-                                       grid(n - 2, i, j, k) +
-                                       grid.tau * grid.tau * laplasian(grid, n - 1, i, j, k);
+        for (int i = 1; i <= N - 1; ++i) {
+            for (int j = 1; j <= N - 1; ++j) {
+                for (int k = 1; k <= N - 1; ++k) {
+                    layer(i, j, k) = 2 * previous_1(i, j, k) -
+                                     previous_2(i, j, k) +
+                                     tau * tau * laplasian(previous_1, i, j, k);
                 }
             }
         }
 
         // Border nodes using first type condition
         // TODO: replace by my variant
-        for (int i = 0; i < N; i += N - 1) {
-            for (int j = 0; j < N; ++j) {
-                for (int k = 0; k < N; ++k) {
-                    grid(n, i, j, k) = 0;
+        for (int i = 0; i <= N; i += N) {
+            for (int j = 0; j <= N; ++j) {
+                for (int k = 0; k <= N; ++k) {
+                    layer(i, j, k) = 0;
                 }
             }
         }
-        for (int i = 0; i < N; ++i) {
-            for (int j = 0; j < N; j += N - 1) {
-                for (int k = 0; k < N; ++k) {
-                    grid(n, i, j, k) = 0;
+        for (int i = 0; i <= N; ++i) {
+            for (int j = 0; j <= N; j += N) {
+                for (int k = 0; k <= N; ++k) {
+                    layer(i, j, k) = 0;
                 }
             }
         }
-        for (int i = 0; i < N; ++i) {
-            for (int j = 0; j < N; ++j) {
-                for (int k = 0; k < N; k += N - 1) {
-                    grid(n, i, j, k) = 0;
+        for (int i = 0; i <= N; ++i) {
+            for (int j = 0; j <= N; ++j) {
+                for (int k = 0; k <= N; k += N) {
+                    layer(i, j, k) = 0;
                 }
             }
         }
 
-        if ((n + 1) % 10 == 0) {
+        if ((n + 1) % 50 == 0) {
             LOG << "Step " << n + 1 << " completed" << endl;
         }
     }
 
-    void solve() {
+    Grid3D *solve() {
         LOG << "Start solve()\n";
-        init();
-        for (int step = 2; step < grid.K; ++step) {
-            makeStep(step);
+        Grid3D *grids[3] = {new Grid3D(N), new Grid3D(N), new Grid3D(N)};
+        init_0(*grids[0]);
+        init_1(*grids[1]);
+        for (int step = 2; step <= K; ++step) {
+            makeStep(
+                step,
+                *grids[step % 3],
+                *grids[(step - 1) % 3],
+                *grids[(step - 2) % 3]);
+        }
+        delete grids[(K - 1) % 3];
+        delete grids[(K - 2) % 3];
+        return grids[K % 3];
+    }
+
+    void fillByF(Grid3D &grid, Function4D *f, int n) {
+        for (int i = 0; i <= grid.N; ++i) {
+            for (int j = 0; j <= grid.N; ++j) {
+                for (int k = 0; k <= grid.N; ++k) {
+                    grid(i, j, k) = (*f)(
+                        tau * n,
+                        h_x * i,
+                        h_y * j,
+                        h_z * k);
+                }
+            }
         }
     }
 };
 
-class U : Function4D {
+class U : public Function4D {
     const double L_x;
     const double L_y;
     const double L_z;
@@ -212,7 +233,7 @@ class U : Function4D {
     }
 };
 
-class Phi : Function3D {
+class Phi : public Function3D {
     double L_x;
     double L_y;
     double L_z;
@@ -228,22 +249,6 @@ class Phi : Function3D {
         return sin(M_2_PI * x / L_x) * sin(M_PI * y / L_y) * sin(M_2_PI * z / L_z);
     }
 };
-
-void fillByF(Grid &grid, Function4D *f) {
-    for (int n = 0; n < grid.K; ++n) {
-        for (int i = 0; i < grid.N; ++i) {
-            for (int j = 0; j < grid.N; ++j) {
-                for (int k = 0; k < grid.N; ++k) {
-                    grid(n, i, j, k) = (*f)(
-                        grid.tau * n,
-                        grid.h_x * i,
-                        grid.h_y * j,
-                        grid.h_z * k);
-                }
-            }
-        }
-    }
-}
 
 int main(int argc, char **argv) {
     if (argc <= 8) {
@@ -266,23 +271,24 @@ int main(int argc, char **argv) {
     U u(L_x, L_y, L_z);
     LOG << "Phi and U created\n";
 
-    Grid grid(T, L_x, L_y, L_z, N, K);
+    Solver solver(K, L_x, L_y, L_z, N, K, &u, &phi);
+    LOG << "Solver created\n";
+    LOG << "Initialization successfully completed\n";
+    Grid3D *grid;
 
     if (strcmp(argv[1], "num") == 0) {
-        Solver solver(K, L_x, L_y, L_z, N, K, grid, (Function4D *)&u, (Function3D *)&phi);
-        LOG << "Solver created\n";
-        LOG << "Initialization successfully completed\n";
-
-        solver.solve();
+        grid = solver.solve();
         LOG << "Solving complete\n";
     } else {
-        fillByF(grid, (Function4D *)&u);
+        grid = new Grid3D(N);
+        solver.fillByF(*grid, &u, K);
     }
 
     LOG << "Writing result to file\n";
-    grid.writeToFile(outFile);
+    grid->writeToFile(outFile);
     outFile.close();
     LOG << "Result written\n";
 
+    delete grid;
     return 0;
 }
