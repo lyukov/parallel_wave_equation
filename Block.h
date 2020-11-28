@@ -15,8 +15,9 @@ public:
 
     void makeStep();
 
-    const Grid3D *getCurrentState() const;
+    const Grid3D &getCurrentState() const;
 
+    void printError(Grid3D& groundTruth) const;
 private:
     int block_coords[3];
     int block_size[3];

@@ -80,7 +80,7 @@ void MathSolver::fillByU(Grid3D &grid, int n) const {
     }
 }
 
-double MathSolver::C_norm_inner(Grid3D &grid, Grid3D &another) const {
+double MathSolver::C_norm_inner(const Grid3D &grid, const Grid3D &another) const {
     double c_norm = 0;
     for (int i = 1; i < grid.shape[0] - 1; ++i) {
         for (int j = 1; j < grid.shape[1] - 1; ++j) {

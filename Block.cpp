@@ -35,8 +35,8 @@ Block::Block(MathSolver *solver, int splits_X, int splits_Y, int splits_Z, int N
     }
 }
 
-const Grid3D *Block::getCurrentState() const {
-    return &(grids[(iteration + N_GRIDS - 1) % N_GRIDS]);
+const Grid3D &Block::getCurrentState() const {
+    return grids[(iteration + N_GRIDS - 1) % N_GRIDS];
 }
 
 void Block::makeStep() {
@@ -54,7 +54,7 @@ void Block::makeStep() {
     }
     iteration++;
     if ((iteration % 50) == 0) {
-        LOG << "Iteration " << iteration << " completed" << std::endl;
+        LOG << "Iteration " << iteration << " completed" << endl;
     }
 }
 
@@ -97,4 +97,13 @@ int Block::getNeighborId(int axis, int direction) const {
     return neighbor[0] * n_splits[1] * n_splits[2] +
            neighbor[1] * n_splits[2] +
            neighbor[2];
+}
+
+void Block::printError(Grid3D &groundTruth) const {
+    double error = solver->C_norm_inner(getCurrentState(), groundTruth);
+    double wholeError;
+    MPI_Reduce(&error, &wholeError, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+    if (blockId == 0) {
+        LOG << "Iteration: " << iteration << ". Error: " << wholeError << endl;
+    }
 }
