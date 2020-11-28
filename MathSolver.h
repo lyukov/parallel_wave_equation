@@ -3,9 +3,9 @@
 #include "functions.h"
 #include "Grid3D.h"
 
-class Solver {
+class MathSolver {
 public:
-    Solver(double T, double L_x, double L_y, double L_z, int N, int K, U u, Phi phi);
+    MathSolver(double T, double L_x, double L_y, double L_z, int N, int K, U u, Phi phi);
 
     void init_0(Grid3D &grid, int start_i, int start_j, int start_k) const;
 
@@ -17,6 +17,8 @@ public:
     double laplacian(const Grid3D &g, int i, int j, int k) const;
 
     void fillByU(Grid3D &grid, int n) const;
+
+    void C_norm(Grid3D &one, Grid3D &another) const;
 
 private:
     const U u;

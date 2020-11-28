@@ -11,5 +11,5 @@ add_executable(Task2
         Grid3D.h
         log.h
         main.cpp
-        Solver.cpp
-        Solver.h Block.cpp Block.h)
+        MathSolver.cpp
+        MathSolver.h Block.cpp Block.h)

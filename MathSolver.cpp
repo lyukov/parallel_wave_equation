@@ -1,7 +1,7 @@
-#include "Solver.h"
+#include "MathSolver.h"
 #include "log.h"
 
-Solver::Solver(double T, double L_x, double L_y, double L_z, int N, int K, U u, Phi phi)
+MathSolver::MathSolver(double T, double L_x, double L_y, double L_z, int N, int K, U u, Phi phi)
         : N(N),
           K(K),
           u(u),
@@ -11,7 +11,7 @@ Solver::Solver(double T, double L_x, double L_y, double L_z, int N, int K, U u, 
           h_z(L_z / N),
           tau(T / K) {}
 
-void Solver::init_0(Grid3D &grid, int start_i, int start_j, int start_k) const {
+void MathSolver::init_0(Grid3D &grid, int start_i, int start_j, int start_k) const {
     // Initialize zero level
     for (int i = 0; i < grid.shape[0]; ++i) {
         for (int j = 0; j < grid.shape[1]; ++j) {
@@ -27,7 +27,7 @@ void Solver::init_0(Grid3D &grid, int start_i, int start_j, int start_k) const {
     LOG << "Level 0 initialized\n";
 }
 
-void Solver::init_1(Grid3D &grid, int start_i, int start_j, int start_k) const {
+void MathSolver::init_1(Grid3D &grid, int start_i, int start_j, int start_k) const {
     // Initialize first level
     for (int i = 0; i < grid.shape[0]; ++i) {
         for (int j = 0; j < grid.shape[1]; ++j) {
@@ -44,7 +44,7 @@ void Solver::init_1(Grid3D &grid, int start_i, int start_j, int start_k) const {
     LOG << "Level 1 initialized\n";
 }
 
-double Solver::laplacian(const Grid3D &g, int i, int j, int k) const {
+double MathSolver::laplacian(const Grid3D &g, int i, int j, int k) const {
     double center = g(i, j, k);
     return (g(i - 1, j, k) - 2.0 * center + g(i + 1, j, k)) / h_x +
            (g(i, j - 1, k) - 2.0 * center + g(i, j + 1, k)) / h_y +
@@ -52,7 +52,7 @@ double Solver::laplacian(const Grid3D &g, int i, int j, int k) const {
 }
 
 /** Fills n-th layer of grid. It depends on two previous layers. */
-void Solver::fillInnerNodes(Grid3D &grid, const Grid3D &previous_1, const Grid3D &previous_2) const {
+void MathSolver::fillInnerNodes(Grid3D &grid, const Grid3D &previous_1, const Grid3D &previous_2) const {
     // Inner nodes
     for (int i = 1; i < grid.shape[0] - 1; ++i) {
         for (int j = 1; j < grid.shape[1] - 1; ++j) {
@@ -65,7 +65,7 @@ void Solver::fillInnerNodes(Grid3D &grid, const Grid3D &previous_1, const Grid3D
     }
 }
 
-void Solver::fillByU(Grid3D &grid, int n) const {
+void MathSolver::fillByU(Grid3D &grid, int n) const {
     for (int i = 0; i < grid.shape[0]; ++i) {
         for (int j = 0; j < grid.shape[1]; ++j) {
             for (int k = 0; k < grid.shape[2]; ++k) {

@@ -3,7 +3,7 @@
 #include <vector>
 #include <mpi.h>
 #include "Grid3D.h"
-#include "Solver.h"
+#include "MathSolver.h"
 
 const int N_GRIDS = 3;
 
@@ -11,7 +11,7 @@ class Block {
 public:
     static int calcBlockSize(int N, int I, int splits);
 
-    Block(Solver *solver, int splits_X, int splits_Y, int splits_Z, int N);
+    Block(MathSolver *solver, int splits_X, int splits_Y, int splits_Z, int N);
 
     void makeStep();
 
@@ -24,7 +24,7 @@ private:
     int n_splits[3];   // Number of blocks
     int blockId;
     bool isPeriodicalCondition[3];
-    const Solver *solver;
+    const MathSolver *solver;
 
     /* Mutable state */
     int iteration;

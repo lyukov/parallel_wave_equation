@@ -8,7 +8,7 @@ int Block::calcBlockSize(int N, int I, int splits) {
            size;
 }
 
-Block::Block(Solver *solver, int splits_X, int splits_Y, int splits_Z, int N) : solver(solver) {
+Block::Block(MathSolver *solver, int splits_X, int splits_Y, int splits_Z, int N) : solver(solver) {
     MPI_Comm_rank(MPI_COMM_WORLD, &blockId);
 
     iteration = 0;

@@ -5,7 +5,7 @@
 #include <string>
 
 #include "Grid3D.h"
-#include "Solver.h"
+#include "MathSolver.h"
 #include "functions.h"
 #include "log.h"
 
@@ -41,8 +41,8 @@ int main(int argc, char **argv) {
     U u(L_x, L_y, L_z);
     LOG << "Phi and U created\n";
 
-    Solver solver(T, L_x, L_y, L_z, N, K, u, phi);
-    LOG << "Solver created\n";
+    MathSolver solver(T, L_x, L_y, L_z, N, K, u, phi);
+    LOG << "MathSolver created\n";
     LOG << "Initialization successfully completed\n";
     Grid3D *grid;
 
