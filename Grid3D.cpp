@@ -1,6 +1,6 @@
 #include "Grid3D.h"
 
-#include "log.h"
+#include "utils.h"
 
 Grid3D::Grid3D(int N1, int N2, int N3) : size(N1 * N2 * N3), _cfI(N2 * N3), _cfJ(N3) {
     shape[0] = N1;

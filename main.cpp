@@ -7,7 +7,7 @@
 #include "Grid3D.h"
 #include "MathSolver.h"
 #include "functions.h"
-#include "log.h"
+#include "utils.h"
 
 using std::endl;
 

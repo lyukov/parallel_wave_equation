@@ -9,7 +9,7 @@ add_executable(Task2
         functions.h
         Grid3D.cpp
         Grid3D.h
-        log.h
+        utils.h
         main.cpp
         MathSolver.cpp
         MathSolver.h Block.cpp Block.h)

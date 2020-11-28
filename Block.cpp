@@ -1,5 +1,5 @@
 #include "Block.h"
-#include "log.h"
+#include "utils.h"
 
 int Block::calcBlockSize(int N, int I, int splits) {
     const int size = N / splits;

@@ -18,7 +18,7 @@ public:
 
     void fillByU(Grid3D &grid, int n) const;
 
-    void C_norm(Grid3D &one, Grid3D &another) const;
+    double C_norm_inner(Grid3D &grid, Grid3D &another) const;
 
 private:
     const U u;

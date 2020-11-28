@@ -1,5 +1,5 @@
 #include "MathSolver.h"
-#include "log.h"
+#include "utils.h"
 
 MathSolver::MathSolver(double T, double L_x, double L_y, double L_z, int N, int K, U u, Phi phi)
         : N(N),
@@ -59,7 +59,7 @@ void MathSolver::fillInnerNodes(Grid3D &grid, const Grid3D &previous_1, const Gr
             for (int k = 1; k < grid.shape[2] - 1; ++k) {
                 grid(i, j, k) = 2 * previous_1(i, j, k) -
                                 previous_2(i, j, k) +
-                                 tau * tau * laplacian(previous_1, i, j, k);
+                                tau * tau * laplacian(previous_1, i, j, k);
             }
         }
     }
@@ -78,4 +78,19 @@ void MathSolver::fillByU(Grid3D &grid, int n) const {
             }
         }
     }
+}
+
+double MathSolver::C_norm_inner(Grid3D &grid, Grid3D &another) const {
+    double c_norm = 0;
+    for (int i = 1; i < grid.shape[0] - 1; ++i) {
+        for (int j = 1; j < grid.shape[1] - 1; ++j) {
+            for (int k = 1; k < grid.shape[2] - 1; ++k) {
+                c_norm = max(
+                        abs(grid(i, j, k) - another(i, j, k)),
+                        c_norm
+                );
+            }
+        }
+    }
+    return c_norm;
 }
