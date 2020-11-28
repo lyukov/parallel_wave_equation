@@ -12,4 +12,4 @@ add_executable(Task2
         log.h
         main.cpp
         Solver.cpp
-        Solver.h)
+        Solver.h Block.cpp Block.h)

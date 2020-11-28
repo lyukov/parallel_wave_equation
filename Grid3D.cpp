@@ -2,21 +2,17 @@
 
 #include "log.h"
 
-Grid3D::Grid3D(int N1, int N2, int N3, int offset_1, int offset_2, int offset_3)
-        : _N1(N1 + 1), _N2(N2 + 1), _N3(N3 + 1), size(_N1 * _N2 * _N3),
-          offset_1(offset_1), offset_2(offset_2), offset_3(offset_3) {
+Grid3D::Grid3D(int N1, int N2, int N3) : size(N1 * N2 * N3), _cfI(N2 * N3), _cfJ(N3) {
+    shape[0] = N1;
+    shape[1] = N2;
+    shape[2] = N3;
     init();
 }
 
-Grid3D::Grid3D(int N1, int N2, int N3)
-        : _N1(N1 + 1), _N2(N2 + 1), _N3(N3 + 1), size(_N1 * _N2 * _N3),
-          offset_1(0), offset_2(0), offset_3(0) {
-    init();
-}
-
-Grid3D::Grid3D(int N)
-        : _N1(N + 1), _N2(N + 1), _N3(N + 1), size(_N1 * _N2 * _N3),
-          offset_1(0), offset_2(0), offset_3(0) {
+Grid3D::Grid3D(int N) : size(N * N * N), _cfI(N * N), _cfJ(N) {
+    shape[0] = N;
+    shape[1] = N;
+    shape[2] = N;
     init();
 }
 
@@ -27,13 +23,9 @@ void Grid3D::init() {
 
 Grid3D::~Grid3D() {
     if (raw) {
-        delete raw;
+        delete[] raw;
         LOG << "Deleted raw array of size " << size << std::endl;
     }
-}
-
-int Grid3D::_index(int i, int j, int k) const {
-    return (i - offset_1) * (_N2 * _N3) + (j - offset_2) * _N3 + (k - offset_3);
 }
 
 double &Grid3D::operator()(int i, int j, int k) {
@@ -46,4 +38,56 @@ double Grid3D::operator()(int i, int j, int k) const {
 
 void Grid3D::writeToFile(std::ofstream &outFile) const {
     outFile.write((char *) raw, size * sizeof(double));
+}
+
+int Grid3D::getSliceSize(int axis) const {
+    return size / shape[axis];
+}
+
+Slice Grid3D::getSlice(int index, int axis) {
+    Slice slice = Slice(getSliceSize(axis));
+    int idx = 0;
+    if (axis == 0) {
+        for (int j = 0; j < shape[1]; ++j) {
+            for (int k = 0; k < shape[2]; ++k) {
+                slice[idx++] = (*this)(index, j, k);
+            }
+        }
+    } else if (axis == 1) {
+        for (int i = 0; i < shape[0]; ++i) {
+            for (int k = 0; k < shape[3]; ++k) {
+                slice[idx++] = (*this)(i, index, k);
+            }
+        }
+    } else {
+        for (int i = 0; i < shape[0]; ++i) {
+            for (int j = 0; j < shape[1]; ++j) {
+                slice[idx++] = (*this)(i, j, index);
+            }
+        }
+    }
+    return slice;
+}
+
+void Grid3D::setSlice(int index, int axis, const Slice &slice) {
+    int idx = 0;
+    if (axis == 0) {
+        for (int j = 0; j < shape[1]; ++j) {
+            for (int k = 0; k < shape[2]; ++k) {
+                (*this)(index, j, k) = slice[idx++];
+            }
+        }
+    } else if (axis == 1) {
+        for (int i = 0; i < shape[0]; ++i) {
+            for (int k = 0; k < shape[2]; ++k) {
+                (*this)(i, index, k) = slice[idx++];
+            }
+        }
+    } else {
+        for (int i = 0; i < shape[0]; ++i) {
+            for (int j = 0; j < shape[1]; ++j) {
+                (*this)(i, j, index) = slice[idx++];
+            }
+        }
+    }
 }

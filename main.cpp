@@ -18,52 +18,43 @@ std::string getTimestamp() {
     return std::string(stime);
 }
 
-U::U(double L_x, double L_y, double L_z)
-        : L_x(L_x), L_y(L_y), L_z(L_z),
-          a_t(M_PI * sqrt(4.0 / (L_x * L_x) + 1.0 / (L_y * L_y) + 1.0 / (L_z * L_z))) {}
-
-double U::operator()(double t, double x, double y, double z) const {
-    return sin(M_2_PI * x / L_x) * sin(M_PI * y / L_y) * sin(M_2_PI * z / L_z) * cos(a_t * t);
-}
-
-Phi::Phi(double L_x, double L_y, double L_z) : L_x(L_x), L_y(L_y), L_z(L_z) {}
-
-double Phi::operator()(double x, double y, double z) const {
-    return sin(M_2_PI * x / L_x) * sin(M_PI * y / L_y) * sin(M_2_PI * z / L_z);
-}
-
 int main(int argc, char **argv) {
     if (argc <= 8) {
         LOG_ERR << "Usage: prog gt|num L_x L_y L_z T N K out_file" << endl;
         return 0;
     }
 
-    std::ofstream outFile(argv[8], std::ios::out | std::ios::binary);
-    LOG << "Output file created\n";
-
+    char *target = argv[1];
     double L_x = atof(argv[2]);
     double L_y = atof(argv[3]);
     double L_z = atof(argv[4]);
     double T = atof(argv[5]);
     int N = atoi(argv[6]);
     int K = atoi(argv[7]);
+    char *outFileName = argv[8];
     LOG << "Papameters parsed succesfully\n";
+
+    std::ofstream outFile(outFileName, std::ios::out | std::ios::binary);
+    LOG << "Output file created\n";
 
     Phi phi(L_x, L_y, L_z);
     U u(L_x, L_y, L_z);
     LOG << "Phi and U created\n";
 
-    Solver solver(T, L_x, L_y, L_z, N, K, &u, &phi);
+    Solver solver(T, L_x, L_y, L_z, N, K, u, phi);
     LOG << "Solver created\n";
     LOG << "Initialization successfully completed\n";
     Grid3D *grid;
 
-    if (strcmp(argv[1], "num") == 0) {
+    if (strcmp(target, "num") == 0) {
         grid = solver.solve();
         LOG << "Solving complete\n";
-    } else {
+    } else if (strcmp(target, "gt") == 0) {
         grid = new Grid3D(N);
-        solver.fillByF(*grid, &u, K);
+        solver.fillByU(*grid, K);
+    } else {
+        LOG_ERR << "Unknown target" << endl;
+        return 1;
     }
 
     LOG << "Writing result to file\n";
