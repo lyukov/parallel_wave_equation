@@ -32,6 +32,17 @@ std::vector<double> MPIProxy::receiveVector(int size, int sender) const {
     return data;
 }
 
+void MPIProxy::sendDouble(double value, int receiver) const {
+    MPI_Send(&value, 1, MPI_DOUBLE,receiver, 0, MPI_COMM_WORLD);
+}
+
+double MPIProxy::receiveDouble(int sender) const {
+    MPI_Status dummyStatus;
+    double value;
+    MPI_Recv(&value, 1, MPI_DOUBLE, sender, 0, MPI_COMM_WORLD, &dummyStatus);
+    return value;
+}
+
 double MPIProxy::maxOverAll(double value) const {
     double result;
     MPI_Reduce(&value, &result, 1, MPI_DOUBLE, MPI_MAX, getMainProcId(), MPI_COMM_WORLD);

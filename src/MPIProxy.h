@@ -16,6 +16,10 @@ public:
 
     std::vector<double> receiveVector(int size, int sender) const;
 
+    void sendDouble(double value, int receiver) const;
+
+    double receiveDouble(int sender) const;
+
     double maxOverAll(double value) const;
 
     int getMainProcId() const { return 0; }

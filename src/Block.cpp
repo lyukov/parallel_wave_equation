@@ -55,18 +55,15 @@ void Block::makeStep(bool shareBorders) {
         solver->init_2(
                 grids[iteration % N_GRIDS], grids[(iteration - 1) % N_GRIDS]
         );
-        if (shareBorders) {
-            syncWithNeighbors();
-        }
     } else {
         solver->makeStepForInnerNodes(
                 grids[iteration % N_GRIDS],
                 grids[(iteration - 1) % N_GRIDS],
                 grids[(iteration - 2) % N_GRIDS]
         );
-        if (shareBorders) {
-            syncWithNeighbors();
-        }
+    }
+    if (shareBorders) {
+        syncWithNeighbors();
     }
 }
 
@@ -108,7 +105,9 @@ int Block::getNeighborId(int axis, int direction) const {
     int neighbor[3] = {block_coords[0], block_coords[1], block_coords[2]};
     neighbor[axis] = neighbor[axis] + direction;
     if (neighbor[axis] < 0 || neighbor[axis] >= n_splits[axis]) {
-        if (!isPeriodicalCondition[axis]) return -1;
+        if (!isPeriodicalCondition[axis]) {
+            return -1;
+        }
         neighbor[axis] = (neighbor[axis] + n_splits[axis]) % n_splits[axis];
     }
     return neighbor[0] * n_splits[1] * n_splits[2] +
@@ -122,9 +121,6 @@ void Block::printError(Grid3D &groundTruth) const {
     );
     mpi->barrier();
     double maxGt = mpi->maxOverAll(max(groundTruth.getFlatten()));
-//    double relativeError = mpi->maxOverAll(
-//            solver->maxRelativeErrorInner(getCurrentState(), groundTruth)
-//    );
     if (mpi->isMainProcess()) {
         LOG << "Iteration: " << iteration
             << ". Max error: " << absoluteError

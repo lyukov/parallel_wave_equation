@@ -8,8 +8,6 @@
 #include "MPIProxy.h"
 #include "Block.h"
 
-using std::endl;
-
 std::string getTimestamp() {
     std::time_t time = std::time(NULL);
     char stime[20];
@@ -20,7 +18,7 @@ std::string getTimestamp() {
 int main(int argc, char **argv) {
     if (argc <= 7) {
         LOG_ERR << "argc = " << argc << endl;
-        LOG_ERR << "Usage: prog L T N K splits_X splits_Y splits_Z" << endl;
+        LOG_ERR << "Usage: wave L T N K splits_X splits_Y splits_Z" << endl;
         return 0;
     }
 
@@ -32,7 +30,7 @@ int main(int argc, char **argv) {
     int splits_Y = atoi(argv[6]);
     int splits_Z = atoi(argv[7]);
     double L_x = L, L_y = L, L_z = L;
-    LOG_DEBUG << "Papameters parsed succesfully\n";
+    LOG_DEBUG << "Parameters parsed successfully\n";
 
     MPIProxy mpi(&argc, &argv);
     double startTime = mpi.time();
