@@ -6,10 +6,10 @@ set(CMAKE_CXX_STANDARD 98)
 include_directories(.)
 
 add_executable(Task2
-        functions.h
-        Grid3D.cpp
-        Grid3D.h
-        utils.h
-        main.cpp
-        MathSolver.cpp
-        MathSolver.h Block.cpp Block.h MPIProxy.cpp MPIProxy.h)
+        src/functions.h
+        src/Grid3D.cpp
+        src/Grid3D.h
+        src/utils.h
+        src/main.cpp
+        src/MathSolver.cpp
+        src/MathSolver.h src/Block.cpp src/Block.h src/MPIProxy.cpp src/MPIProxy.h)

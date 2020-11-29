@@ -55,7 +55,7 @@ Slice Grid3D::getSlice(int index, int axis) {
         }
     } else if (axis == 1) {
         for (int i = 0; i < shape[0]; ++i) {
-            for (int k = 0; k < shape[3]; ++k) {
+            for (int k = 0; k < shape[2]; ++k) {
                 slice[idx++] = (*this)(i, index, k);
             }
         }
