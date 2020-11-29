@@ -12,11 +12,11 @@ public:
     void init_1(Grid3D &grid, int start_i, int start_j, int start_k) const;
 
     /** Fills n-th grid of grid. It depends on two previous layers. */
-    void fillInnerNodes(Grid3D &grid, const Grid3D &previous_1, const Grid3D &previous_2) const;
+    void makeStepForInnerNodes(Grid3D &grid, const Grid3D &previous_1, const Grid3D &previous_2) const;
 
     double laplacian(const Grid3D &g, int i, int j, int k) const;
 
-    void fillByU(Grid3D &grid, int n) const;
+    void fillByU(Grid3D &grid, int n, int start_i, int start_j, int start_k) const;
 
     double C_norm_inner(const Grid3D &grid, const Grid3D &another) const;
 

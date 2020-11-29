@@ -1,13 +1,13 @@
 #include <cmath>
-#include <cstring>
 #include <ctime>
 #include <iostream>
 #include <string>
 
-#include "Grid3D.h"
 #include "MathSolver.h"
 #include "functions.h"
 #include "utils.h"
+#include "MPIProxy.h"
+#include "Block.h"
 
 using std::endl;
 
@@ -19,49 +19,49 @@ std::string getTimestamp() {
 }
 
 int main(int argc, char **argv) {
-    if (argc <= 8) {
-        LOG_ERR << "Usage: prog gt|num L_x L_y L_z T N K out_file" << endl;
+    if (argc <= 10) {
+        LOG_ERR << "Usage: prog L_x L_y L_z T N K splits_X splits_Y splits_Z out_file" << endl;
         return 0;
     }
 
-    char *target = argv[1];
-    double L_x = atof(argv[2]);
-    double L_y = atof(argv[3]);
-    double L_z = atof(argv[4]);
-    double T = atof(argv[5]);
-    int N = atoi(argv[6]);
-    int K = atoi(argv[7]);
-    char *outFileName = argv[8];
+    double L_x = atof(argv[1]);
+    double L_y = atof(argv[2]);
+    double L_z = atof(argv[3]);
+    double T = atof(argv[4]);
+    int N = atoi(argv[5]);
+    int K = atoi(argv[6]);
+    int splits_X = atoi(argv[7]);
+    int splits_Y = atoi(argv[8]);
+    int splits_Z = atoi(argv[9]);
     LOG << "Papameters parsed succesfully\n";
 
-    std::ofstream outFile(outFileName, std::ios::out | std::ios::binary);
-    LOG << "Output file created\n";
+    MPIProxy mpiProxy(&argc, &argv);
+    LOG << "MPI Proxy created" << endl;
+
+//    std::ofstream outFile(outFileName, std::ios::out | std::ios::binary);
+//    LOG << "Output file created\n";
 
     Phi phi(L_x, L_y, L_z);
     U u(L_x, L_y, L_z);
-    LOG << "Phi and U created\n";
+    LOG << "Phi and U created" << endl;
 
     MathSolver solver(T, L_x, L_y, L_z, N, K, u, phi);
-    LOG << "MathSolver created\n";
-    LOG << "Initialization successfully completed\n";
-    Grid3D *grid;
+    LOG << "MathSolver created" << endl;
+    Block block(&mpiProxy, &solver, splits_X, splits_Y, splits_Z, N);
+    LOG << "Block created" << endl;
+    LOG << "Initialization successfully completed" << endl;
 
-    if (strcmp(target, "num") == 0) {
-        grid = solver.solve();
-        LOG << "Solving complete\n";
-    } else if (strcmp(target, "gt") == 0) {
-        grid = new Grid3D(N);
-        solver.fillByU(*grid, K);
-    } else {
-        LOG_ERR << "Unknown target" << endl;
-        return 1;
+    Grid3D groundTruth(block.shape[0], block.shape[1], block.shape[2]);
+
+    for (int iter = 0; iter < K; ++iter) {
+        block.makeStep();
+        solver.fillByU(
+                groundTruth,
+                iter,
+                block.start[0], block.start[1], block.start[2]
+        );
+        block.printError(groundTruth);
     }
 
-    LOG << "Writing result to file\n";
-    grid->writeToFile(outFile);
-    outFile.close();
-    LOG << "Result written\n";
-
-    delete grid;
     return 0;
 }

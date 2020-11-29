@@ -2,35 +2,42 @@
 #include "utils.h"
 
 int Block::calcBlockSize(int N, int I, int splits) {
-    const int size = N / splits;
-    return (I == splits - 1) ?         // if last block
+    int size = N / splits;
+    size = (I == splits - 1) ?         // if last block
            N - size * (splits - 1) :   // get all remaining size
            size;
+    return size + 2;                   // padding
 }
 
-Block::Block(MathSolver *solver, int splits_X, int splits_Y, int splits_Z, int N) : solver(solver) {
-    MPI_Comm_rank(MPI_COMM_WORLD, &blockId);
+Block::Block(
+        MPIProxy *mpi,
+        MathSolver *solver,
+        int splits_X, int splits_Y, int splits_Z,
+        int N
+) : solver(solver), mpi(mpi) {
+
+    blockId = mpi->getRank();
 
     iteration = 0;
     block_coords[0] = blockId / (splits_Y * splits_Z);
     block_coords[1] = (blockId - splits_Y * splits_Z * block_coords[0]) / splits_Z;
     block_coords[2] = blockId % splits_Z;
-    block_size[0] = calcBlockSize(N, block_coords[0], splits_X);
-    block_size[1] = calcBlockSize(N, block_coords[1], splits_Y);
-    block_size[2] = calcBlockSize(N, block_coords[2], splits_Z);
+    shape[0] = calcBlockSize(N, block_coords[0], splits_X);
+    shape[1] = calcBlockSize(N, block_coords[1], splits_Y);
+    shape[2] = calcBlockSize(N, block_coords[2], splits_Z);
     n_splits[0] = splits_X;
     n_splits[1] = splits_Y;
     n_splits[2] = splits_Z;
-    start[0] = block_coords[0] * block_size[0];
-    start[1] = block_coords[1] * block_size[1];
-    start[2] = block_coords[2] * block_size[2];
+    start[0] = block_coords[0] * (shape[0] - 2);
+    start[1] = block_coords[1] * (shape[1] - 2);
+    start[2] = block_coords[2] * (shape[2] - 2);
     isPeriodicalCondition[0] = true;
     isPeriodicalCondition[1] = false;
     isPeriodicalCondition[2] = true;
 
     for (int i = 0; i < 3; ++i) {
         grids.push_back(
-                Grid3D(block_size[0] + 2, block_size[1] + 2, block_size[2] + 2) // Add padding
+                Grid3D(shape[0], shape[1], shape[2]) // Add padding
         );
     }
 }
@@ -39,18 +46,20 @@ const Grid3D &Block::getCurrentState() const {
     return grids[(iteration + N_GRIDS - 1) % N_GRIDS];
 }
 
-void Block::makeStep() {
+void Block::makeStep(bool shareBorders) {
     if (iteration == 0) {
         solver->init_0(grids[iteration % N_GRIDS], start[0], start[1], start[2]);
     } else if (iteration == 1) {
         solver->init_1(grids[iteration % N_GRIDS], start[0], start[1], start[2]);
     } else {
-        solver->fillInnerNodes(
+        solver->makeStepForInnerNodes(
                 grids[iteration % N_GRIDS],
                 grids[(iteration - 1) % N_GRIDS],
                 grids[(iteration - 2) % N_GRIDS]
         );
-        syncWithNeighbors();
+        if (shareBorders) {
+            syncWithNeighbors();
+        }
     }
     iteration++;
     if ((iteration % 50) == 0) {
@@ -59,29 +68,24 @@ void Block::makeStep() {
 }
 
 void Block::syncWithNeighbors() {
-    MPI_Request dummyRequest;
     Grid3D &grid = grids[iteration % N_GRIDS];
 
     for (int axis = 0; axis < 3; ++axis) {
         for (int direction = -1; direction <= 1; direction += 2) {
             int neighborId = getNeighborId(axis, direction);
             if (neighborId == -1) continue;
-            int index = direction == -1 ? 0 : block_size[axis] + 1;
+            int index = direction == -1 ? 0 : shape[axis] - 1;
             Slice slice = grid.getSlice(index, axis);
-            MPI_Isend(slice.data(), slice.size(), MPI_DOUBLE,
-                      neighborId, 0, MPI_COMM_WORLD, &dummyRequest);
+            mpi->sendVector(slice, neighborId);
         }
     }
 
-    MPI_Status dummyStatus;
     for (int axis = 0; axis < 3; ++axis) {
         for (int direction = -1; direction <= 1; direction += 2) {
             int neighborId = getNeighborId(axis, direction);
             if (neighborId == -1) continue;
-            int index = direction == -1 ? 0 : block_size[axis] + 1;
-            Slice slice(grid.getSliceSize(axis));
-            MPI_Recv(slice.data(), slice.size(), MPI_DOUBLE,
-                     neighborId, 0, MPI_COMM_WORLD, &dummyStatus);
+            int index = direction == -1 ? 0 : shape[axis] - 1;
+            Slice slice = mpi->receiveVector(grid.getSliceSize(axis), neighborId);
             grid.setSlice(index, axis, slice);
         }
     }
@@ -101,8 +105,7 @@ int Block::getNeighborId(int axis, int direction) const {
 
 void Block::printError(Grid3D &groundTruth) const {
     double error = solver->C_norm_inner(getCurrentState(), groundTruth);
-    double wholeError;
-    MPI_Reduce(&error, &wholeError, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+    double wholeError = mpi->maxOverAll(error);
     if (blockId == 0) {
         LOG << "Iteration: " << iteration << ". Error: " << wholeError << endl;
     }

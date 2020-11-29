@@ -12,4 +12,4 @@ add_executable(Task2
         utils.h
         main.cpp
         MathSolver.cpp
-        MathSolver.h Block.cpp Block.h)
+        MathSolver.h Block.cpp Block.h MPIProxy.cpp MPIProxy.h)
