@@ -1,5 +1,6 @@
 #include "MathSolver.h"
 #include "utils.h"
+#include <omp.h>
 
 MathSolver::MathSolver(double T, double L_x, double L_y, double L_z, int N, int K, U u, Phi phi)
         : N(N),
@@ -13,6 +14,7 @@ MathSolver::MathSolver(double T, double L_x, double L_y, double L_z, int N, int 
 
 void MathSolver::init_1(Grid3D &grid, int start_i, int start_j, int start_k) const {
     // Initialize zero level
+#pragma omp parallel for
     for (int i = 0; i < grid.shape[0]; ++i) {
         for (int j = 0; j < grid.shape[1]; ++j) {
             for (int k = 0; k < grid.shape[2]; ++k) {
@@ -29,6 +31,7 @@ void MathSolver::init_1(Grid3D &grid, int start_i, int start_j, int start_k) con
 
 void MathSolver::init_2(Grid3D &grid, int start_i, int start_j, int start_k) const {
     // Initialize first level
+#pragma omp parallel for
     for (int i = 0; i < grid.shape[0]; ++i) {
         for (int j = 0; j < grid.shape[1]; ++j) {
             for (int k = 0; k < grid.shape[2]; ++k) {
@@ -54,25 +57,20 @@ double MathSolver::laplacian(const Grid3D &g, int i, int j, int k) const {
 /** Fills n-th layer of grid. It depends on two previous layers. */
 void MathSolver::makeStepForInnerNodes(Grid3D &grid, const Grid3D &previous_1, const Grid3D &previous_2) const {
     // Inner nodes
+#pragma omp parallel for
     for (int i = 1; i < grid.shape[0] - 1; ++i) {
         for (int j = 1; j < grid.shape[1] - 1; ++j) {
             for (int k = 1; k < grid.shape[2] - 1; ++k) {
-                double result = 2 * previous_1(i, j, k) -
+                grid(i, j, k) = 2 * previous_1(i, j, k) -
                                 previous_2(i, j, k) +
                                 tau * tau * laplacian(previous_1, i, j, k);
-                if (abs(result) > 100) {
-                    LOG << result << " " << i << " " << j << " " << k << endl;
-                    LOG << previous_1(i, j, k) << " "
-                        << previous_2(i, j, k) << " "
-                        << laplacian(previous_1, i, j, k) << endl;
-                }
-                grid(i, j, k) = result;
             }
         }
     }
 }
 
 void MathSolver::fillByU(Grid3D &grid, int n, int start_i, int start_j, int start_k) const {
+#pragma omp parallel for
     for (int i = 0; i < grid.shape[0]; ++i) {
         for (int j = 0; j < grid.shape[1]; ++j) {
             for (int k = 0; k < grid.shape[2]; ++k) {
@@ -93,7 +91,7 @@ double MathSolver::C_norm_inner(const Grid3D &grid, const Grid3D &another) const
         for (int j = 1; j < grid.shape[1] - 1; ++j) {
             for (int k = 1; k < grid.shape[2] - 1; ++k) {
                 c_norm = max(
-                        abs(grid(i, j, k) - another(i, j, k)),
+                        std::abs(grid(i, j, k) - another(i, j, k)),
                         c_norm
                 );
             }
