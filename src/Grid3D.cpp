@@ -17,15 +17,12 @@ Grid3D::Grid3D(int N) : size(N * N * N), _cfI(N * N), _cfJ(N) {
 }
 
 void Grid3D::init() {
-    raw = new double[size];
+    raw.resize(size);
     LOG << "Created raw array of size " << size << std::endl;
 }
 
 Grid3D::~Grid3D() {
-    if (raw) {
-        delete[] raw;
-        LOG << "Deleted raw array of size " << size << std::endl;
-    }
+    LOG << "Deleted raw array of size " << size << std::endl;
 }
 
 double &Grid3D::operator()(int i, int j, int k) {
@@ -37,7 +34,7 @@ double Grid3D::operator()(int i, int j, int k) const {
 }
 
 void Grid3D::writeToFile(std::ofstream &outFile) const {
-    outFile.write((char *) raw, size * sizeof(double));
+    outFile.write((char *) raw.data(), size * sizeof(double));
 }
 
 int Grid3D::getSliceSize(int axis) const {

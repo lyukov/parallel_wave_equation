@@ -10,7 +10,7 @@ typedef std::vector<double> Slice;
  */
 class Grid3D {
 public:
-    const int size;
+    int size;
     int shape[3];
 
     explicit Grid3D(int N);
@@ -32,9 +32,9 @@ public:
     void writeToFile(std::ofstream &outFile) const;
 
 private:
-    const int _cfI, _cfJ; // Coefficients for indexing
+    int _cfI, _cfJ; // Coefficients for indexing
 
-    double *raw;
+    std::vector<double> raw;
 
     inline int _index(int i, int j, int k) const { return i * _cfI + j * _cfJ + k; }
 

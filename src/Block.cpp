@@ -15,7 +15,6 @@ Block::Block(
         int splits_X, int splits_Y, int splits_Z,
         int N
 ) : solver(solver), mpi(mpi) {
-
     blockId = mpi->getRank();
 
     iteration = 0;
@@ -37,7 +36,7 @@ Block::Block(
 
     for (int i = 0; i < 3; ++i) {
         grids.push_back(
-                Grid3D(shape[0], shape[1], shape[2]) // Add padding
+                Grid3D(shape[0], shape[1], shape[2])
         );
     }
 }
@@ -47,6 +46,7 @@ const Grid3D &Block::getCurrentState() const {
 }
 
 void Block::makeStep(bool shareBorders) {
+    LOG << "Running iteration " << iteration << endl;
     if (iteration == 0) {
         solver->init_0(grids[iteration % N_GRIDS], start[0], start[1], start[2]);
     } else if (iteration == 1) {

@@ -37,3 +37,9 @@ double MPIProxy::maxOverAll(double value) const {
     MPI_Reduce(&value, &result, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
     return result;
 }
+
+int MPIProxy::getNumOfProcessors() const {
+    int n_proc;
+    MPI_Comm_size(MPI_COMM_WORLD, &n_proc);
+    return n_proc;
+}

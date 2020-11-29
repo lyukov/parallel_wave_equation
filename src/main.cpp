@@ -18,8 +18,9 @@ std::string getTimestamp() {
 }
 
 int main(int argc, char **argv) {
-    if (argc <= 10) {
-        LOG_ERR << "Usage: prog L_x L_y L_z T N K splits_X splits_Y splits_Z out_file" << endl;
+    if (argc <= 9) {
+        LOG_ERR << "argc = " << argc << endl;
+        LOG_ERR << "Usage: prog L_x L_y L_z T N K splits_X splits_Y splits_Z" << endl;
         return 0;
     }
 
@@ -35,7 +36,9 @@ int main(int argc, char **argv) {
     LOG << "Papameters parsed succesfully\n";
 
     MPIProxy mpiProxy(&argc, &argv);
-    LOG << "MPI Proxy created" << endl;
+    int nProcessors = mpiProxy.getNumOfProcessors();
+    assert(nProcessors == splits_X * splits_Y * splits_Z);
+    LOG << "MPI Proxy created. Rank: " << mpiProxy.getRank() << ". Processors: " << nProcessors << endl;
 
 //    std::ofstream outFile(outFileName, std::ios::out | std::ios::binary);
 //    LOG << "Output file created\n";
@@ -57,7 +60,9 @@ int main(int argc, char **argv) {
         solver.fillByU(
                 groundTruth,
                 iter,
-                block.start[0], block.start[1], block.start[2]
+                block.start[0] - 1,
+                block.start[1] - 1,
+                block.start[2] - 1
         );
         block.printError(groundTruth);
     }

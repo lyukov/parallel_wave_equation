@@ -10,6 +10,8 @@ public:
 
     int getRank() const;
 
+    int getNumOfProcessors() const;
+
     void sendVector(const std::vector<double> &data, int receiver) const;
 
     std::vector<double> receiveVector(int size, int sender) const;
