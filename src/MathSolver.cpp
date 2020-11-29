@@ -55,8 +55,7 @@ void MathSolver::makeStepForInnerNodes(Grid3D &grid, const Grid3D &previous_1, c
     for (int i = 1; i < grid.shape[0] - 1; ++i) {
         for (int j = 1; j < grid.shape[1] - 1; ++j) {
             for (int k = 1; k < grid.shape[2] - 1; ++k) {
-                grid(i, j, k) = 2 * previous_1(i, j, k) -
-                                previous_2(i, j, k) +
+                grid(i, j, k) = 2.0 * previous_1(i, j, k) - previous_2(i, j, k) +
                                 sqr(tau) * laplacian(previous_1, i, j, k);
             }
         }

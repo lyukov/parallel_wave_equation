@@ -33,8 +33,10 @@ double Grid3D::operator()(int i, int j, int k) const {
     return raw[_index(i, j, k)];
 }
 
-void Grid3D::writeToFile(std::ofstream &outFile) const {
+void Grid3D::writeToFile(const std::string& fileName) const {
+    std::ofstream outFile(fileName, std::ios::out | std::ios::binary);
     outFile.write((char *) raw.data(), size * sizeof(double));
+    outFile.close();
 }
 
 int Grid3D::getSliceSize(int axis) const {

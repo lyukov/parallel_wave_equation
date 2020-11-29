@@ -1,6 +1,7 @@
 #include <ctime>
 #include <iostream>
 #include <string>
+#include <sstream>
 
 #include "MathSolver.h"
 #include "functions.h"
@@ -38,9 +39,6 @@ int main(int argc, char **argv) {
     assert(nProcessors == splits_X * splits_Y * splits_Z);
     LOG_DEBUG << "MPI Proxy created. Rank: " << mpi.getRank() << ". Processors: " << nProcessors << endl;
 
-//    std::ofstream outFile(outFileName, std::ios::out | std::ios::binary);
-//    LOG << "Output file created\n";
-
     Phi phi(L_x, L_y, L_z);
     U u(L_x, L_y, L_z);
 
@@ -55,7 +53,7 @@ int main(int argc, char **argv) {
     Grid3D groundTruth(block.shape[0], block.shape[1], block.shape[2]);
 
     for (int iter = 0; iter <= K; ++iter) {
-        block.makeStep(iter != K);
+        block.makeStep(true);
         solver.fillByGroundTruth(
                 groundTruth,
                 iter,
@@ -65,6 +63,10 @@ int main(int argc, char **argv) {
         );
         block.printError(groundTruth);
     }
+
+//    std::stringstream ss;
+//    ss << mpi.getRank() << ".npy";
+//    block.getCurrentState().writeToFile(ss.str());
 
     mpi.barrier();
     double duration = mpi.time() - startTime;

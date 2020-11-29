@@ -29,7 +29,7 @@ public:
 
     void setZeros(int index, int axis);
 
-    void writeToFile(std::ofstream &outFile) const;
+    void writeToFile(const std::string& fileName) const;
 
     const std::vector<double> &getFlatten() const;
 
