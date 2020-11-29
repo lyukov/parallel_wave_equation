@@ -9,7 +9,15 @@ MathSolver::MathSolver(double T, double L_x, double L_y, double L_z, int N, int 
           h_x(L_x / N),
           h_y(L_y / N),
           h_z(L_z / N),
-          tau(T / K) {}
+          tau(T / K) {
+    LOG << "MathSolver::MathSolver. "
+        << "N = " << N << ", "
+        << "K = " << K << ", "
+        << "h_x = " << h_x << ", "
+        << "h_y = " << h_y << ", "
+        << "h_z = " << h_z << ", "
+        << "tau = " << tau << endl;
+}
 
 void MathSolver::init_0(Grid3D &grid, int start_i, int start_j, int start_k) const {
     // Initialize zero level

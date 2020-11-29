@@ -18,6 +18,8 @@ public:
 
     double maxOverAll(double value) const;
 
+    int getMainProcId() const { return 0; }
+
 private:
     MPIProxy(const MPIProxy &); // non construction-copyable
     MPIProxy &operator=(const MPIProxy &); // non copyable

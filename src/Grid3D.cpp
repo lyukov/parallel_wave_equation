@@ -41,8 +41,8 @@ int Grid3D::getSliceSize(int axis) const {
     return size / shape[axis];
 }
 
-Slice Grid3D::getSlice(int index, int axis) {
-    Slice slice = Slice(getSliceSize(axis));
+std::vector<double> Grid3D::getSlice(int index, int axis) {
+    std::vector<double> slice = std::vector<double>(getSliceSize(axis));
     int idx = 0;
     if (axis == 0) {
         for (int j = 0; j < shape[1]; ++j) {
@@ -66,7 +66,7 @@ Slice Grid3D::getSlice(int index, int axis) {
     return slice;
 }
 
-void Grid3D::setSlice(int index, int axis, const Slice &slice) {
+void Grid3D::setSlice(int index, int axis, const std::vector<double> &slice) {
     int idx = 0;
     if (axis == 0) {
         for (int j = 0; j < shape[1]; ++j) {

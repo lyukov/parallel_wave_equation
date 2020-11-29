@@ -3,8 +3,6 @@
 #include <fstream>
 #include <vector>
 
-typedef std::vector<double> Slice;
-
 /**
  * Three-dimensional tensor of size N1 * N2 * N3
  */
@@ -25,9 +23,9 @@ public:
 
     int getSliceSize(int axis) const;
 
-    Slice getSlice(int index, int axis);
+    std::vector<double> getSlice(int index, int axis);
 
-    void setSlice(int index, int axis, const Slice &slice);
+    void setSlice(int index, int axis, const std::vector<double> &slice);
 
     void writeToFile(std::ofstream &outFile) const;
 

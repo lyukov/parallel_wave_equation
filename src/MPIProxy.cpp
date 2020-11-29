@@ -3,7 +3,7 @@
 //
 
 #include "MPIProxy.h"
-
+#include "utils.h"
 #include <mpi.h>
 
 MPIProxy::MPIProxy(int *argc, char ***argv) {
@@ -22,6 +22,7 @@ int MPIProxy::getRank() const {
 
 void MPIProxy::sendVector(const std::vector<double> &data, int receiver) const {
     MPI_Request dummyRequest;
+    //LOG << "Sending vector: " << data << endl;
     MPI_Isend(data.data(), data.size(), MPI_DOUBLE, receiver, 0, MPI_COMM_WORLD, &dummyRequest);
 }
 
@@ -34,7 +35,7 @@ std::vector<double> MPIProxy::receiveVector(int size, int sender) const {
 
 double MPIProxy::maxOverAll(double value) const {
     double result;
-    MPI_Reduce(&value, &result, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&value, &result, 1, MPI_DOUBLE, MPI_MAX, getMainProcId(), MPI_COMM_WORLD);
     return result;
 }
 
