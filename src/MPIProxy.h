@@ -20,6 +20,10 @@ public:
 
     int getMainProcId() const { return 0; }
 
+    bool isMainProcess() const;
+
+    double time() const;
+
     void barrier() const;
 private:
     MPIProxy(const MPIProxy &); // non construction-copyable

@@ -25,7 +25,6 @@ public:
 private:
     int block_coords[3];
     int n_splits[3];   // Number of blocks
-    int blockId;
     bool isPeriodicalCondition[3];
     const MathSolver *solver;
     const MPIProxy *mpi;

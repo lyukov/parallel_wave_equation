@@ -9,15 +9,7 @@ MathSolver::MathSolver(double T, double L_x, double L_y, double L_z, int N, int 
           h_x(L_x / N),
           h_y(L_y / N),
           h_z(L_z / N),
-          tau(T / K) {
-    LOG << "MathSolver::MathSolver. "
-        << "N = " << N << ", "
-        << "K = " << K << ", "
-        << "h_x = " << h_x << ", "
-        << "h_y = " << h_y << ", "
-        << "h_z = " << h_z << ", "
-        << "tau = " << tau << endl;
-}
+          tau(T / K) {}
 
 void MathSolver::init_1(Grid3D &grid, int start_i, int start_j, int start_k) const {
     // Initialize zero level
@@ -32,7 +24,7 @@ void MathSolver::init_1(Grid3D &grid, int start_i, int start_j, int start_k) con
             }
         }
     }
-    LOG << "Level 0 initialized\n";
+    LOG_DEBUG << "Level 0 initialized\n";
 }
 
 void MathSolver::init_2(Grid3D &grid, int start_i, int start_j, int start_k) const {
@@ -49,7 +41,7 @@ void MathSolver::init_2(Grid3D &grid, int start_i, int start_j, int start_k) con
             }
         }
     }
-    LOG << "Level 1 initialized\n";
+    LOG_DEBUG << "Level 1 initialized\n";
 }
 
 double MathSolver::laplacian(const Grid3D &g, int i, int j, int k) const {
@@ -69,7 +61,7 @@ void MathSolver::makeStepForInnerNodes(Grid3D &grid, const Grid3D &previous_1, c
                                 previous_2(i, j, k) +
                                 tau * tau * laplacian(previous_1, i, j, k);
                 if (abs(result) > 100) {
-                    LOG << result << " " << i << " " << j << " " <<  k << endl;
+                    LOG << result << " " << i << " " << j << " " << k << endl;
                     LOG << previous_1(i, j, k) << " "
                         << previous_2(i, j, k) << " "
                         << laplacian(previous_1, i, j, k) << endl;
@@ -108,4 +100,14 @@ double MathSolver::C_norm_inner(const Grid3D &grid, const Grid3D &another) const
         }
     }
     return c_norm;
+}
+
+std::ostream &operator<<(std::ostream &out, const MathSolver &solver) {
+    return out << "MathSolver: "
+               << "N = " << solver.N << ", "
+               << "K = " << solver.K << ", "
+               << "h_x = " << solver.h_x << ", "
+               << "h_y = " << solver.h_y << ", "
+               << "h_z = " << solver.h_z << ", "
+               << "tau = " << solver.tau;
 }

@@ -9,8 +9,11 @@ using std::endl;
 
 std::string getTimestamp();
 
-#define LOG std::cout << getTimestamp() << " " << getpid() << " : "
-#define LOG_ERR std::cerr << getTimestamp() << " " << getpid() << " : "
+#define _LOG getTimestamp() << " " << getpid()
+
+#define LOG       std::cout << _LOG << " INFO  : "
+#define LOG_ERR   std::cerr << _LOG << " ERROR : "
+#define LOG_DEBUG std::cout << _LOG << " DEBUG : "
 
 template<typename T>
 inline T max(T one, T other) { return one > other ? one : other; }

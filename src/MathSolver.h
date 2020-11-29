@@ -2,6 +2,8 @@
 
 #include "functions.h"
 #include "Grid3D.h"
+#include "utils.h"
+#include <iostream>
 
 class MathSolver {
 public:
@@ -32,4 +34,8 @@ private:
     const double h_y;
     const double h_z;
     const double tau;
+
+    friend std::ostream &operator<<(std::ostream &out, const MathSolver &solver);
 };
+
+std::ostream &operator<<(std::ostream &out, const MathSolver &solver);

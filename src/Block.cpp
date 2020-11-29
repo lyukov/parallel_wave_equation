@@ -15,8 +15,7 @@ Block::Block(
         int splits_X, int splits_Y, int splits_Z,
         int N
 ) : solver(solver), mpi(mpi) {
-    blockId = mpi->getRank();
-
+    int blockId = mpi->getRank();
     iteration = 0;
     block_coords[0] = blockId / (splits_Y * splits_Z);
     block_coords[1] = (blockId - splits_Y * splits_Z * block_coords[0]) / splits_Z;
@@ -27,9 +26,9 @@ Block::Block(
     n_splits[0] = splits_X;
     n_splits[1] = splits_Y;
     n_splits[2] = splits_Z;
-    start[0] = block_coords[0] * (shape[0] - 2);
-    start[1] = block_coords[1] * (shape[1] - 2);
-    start[2] = block_coords[2] * (shape[2] - 2);
+    start[0] = block_coords[0] * (N / n_splits[0]);
+    start[1] = block_coords[1] * (N / n_splits[1]);
+    start[2] = block_coords[2] * (N / n_splits[2]);
     isPeriodicalCondition[0] = true;
     isPeriodicalCondition[1] = false;
     isPeriodicalCondition[2] = true;
@@ -42,14 +41,11 @@ Block::Block(
 }
 
 const Grid3D &Block::getCurrentState() const {
-    return grids[iteration% N_GRIDS];
+    return grids[iteration % N_GRIDS];
 }
 
 void Block::makeStep(bool shareBorders) {
     iteration++;
-//    if (blockId == mpi->getMainProcId()) {
-//        LOG << "Running iteration " << iteration << endl;
-//    }
     if (iteration == 1) {
         solver->init_1(
                 grids[iteration % N_GRIDS],
@@ -70,9 +66,6 @@ void Block::makeStep(bool shareBorders) {
             syncWithNeighbors();
         }
     }
-//    if (blockId == mpi->getMainProcId() && (iteration % 50) == 0) {
-//        LOG << "Iteration " << iteration << " completed" << endl;
-//    }
 }
 
 void Block::syncWithNeighbors() {
@@ -91,8 +84,8 @@ void Block::sendToNeighbors(int axis, int direction) {
         int index = direction == -1 ? 1 : shape[axis] - 2;
         sliceSnd = grids[iteration % N_GRIDS].getSlice(index, axis);
         mpi->sendVector(sliceSnd, neighborId);
-//        LOG << "Sending array. Max: " << max(sliceSnd)
-//            << ", axis = " << axis << ", direction = " << direction << endl;
+        LOG_DEBUG << "Sending array. Max: " << max(sliceSnd)
+                  << ", axis = " << axis << ", direction = " << direction << endl;
     }
 }
 
@@ -102,8 +95,8 @@ void Block::receiveFromNeighbors(int axis, int direction) {
     if (neighbor != -1) {
         int index = direction == -1 ? 0 : shape[axis] - 1;
         std::vector<double> sliceRcv = mpi->receiveVector(grid.getSliceSize(axis), neighbor);
-//        LOG << "Received array. Max: " << max(sliceRcv)
-//            << ", axis = " << axis << ", direction = " << direction << endl;
+        LOG_DEBUG << "Received array. Max: " << max(sliceRcv)
+                  << ", axis = " << axis << ", direction = " << direction << endl;
         grid.setSlice(index, axis, sliceRcv);
     }
     mpi->barrier();
@@ -124,7 +117,7 @@ int Block::getNeighborId(int axis, int direction) const {
 void Block::printError(Grid3D &groundTruth) const {
     double error = solver->C_norm_inner(getCurrentState(), groundTruth);
     double wholeError = mpi->maxOverAll(error);
-    if (blockId == mpi->getMainProcId()) {
+    if (mpi->isMainProcess()) {
         LOG << "Iteration: " << iteration << ". Error: " << wholeError << endl;
     }
 }

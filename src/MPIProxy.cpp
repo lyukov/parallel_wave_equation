@@ -3,7 +3,6 @@
 //
 
 #include "MPIProxy.h"
-#include "utils.h"
 #include <mpi.h>
 
 MPIProxy::MPIProxy(int *argc, char ***argv) {
@@ -22,7 +21,6 @@ int MPIProxy::getRank() const {
 
 void MPIProxy::sendVector(const std::vector<double> &data, int receiver) const {
     MPI_Request dummyRequest;
-    //LOG << "Sending vector: " << data << endl;
     MPI_Isend(data.data(), data.size(), MPI_DOUBLE, receiver, 0, MPI_COMM_WORLD, &dummyRequest);
 }
 
@@ -47,4 +45,12 @@ int MPIProxy::getNumOfProcessors() const {
 
 void MPIProxy::barrier() const {
     MPI_Barrier(MPI_COMM_WORLD);
+}
+
+bool MPIProxy::isMainProcess() const {
+    return getRank() == getMainProcId();
+}
+
+double MPIProxy::time() const {
+    return MPI_Wtime();
 }
