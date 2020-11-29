@@ -20,7 +20,9 @@ public:
 
     void fillByU(Grid3D &grid, int n, int start_i, int start_j, int start_k) const;
 
-    double C_norm_inner(const Grid3D &grid, const Grid3D &another) const;
+    double maxAbsoluteErrorInner(const Grid3D &grid, const Grid3D &another) const;
+
+    double maxRelativeErrorInner(const Grid3D &grid, const Grid3D &another) const;
 
 private:
     const U u;

@@ -115,9 +115,16 @@ int Block::getNeighborId(int axis, int direction) const {
 }
 
 void Block::printError(Grid3D &groundTruth) const {
-    double error = solver->C_norm_inner(getCurrentState(), groundTruth);
-    double wholeError = mpi->maxOverAll(error);
+    double absoluteError = mpi->maxOverAll(
+            solver->maxAbsoluteErrorInner(getCurrentState(), groundTruth)
+    );
+    mpi->barrier();
+    double relativeError = mpi->maxOverAll(
+            solver->maxRelativeErrorInner(getCurrentState(), groundTruth)
+    );
     if (mpi->isMainProcess()) {
-        LOG << "Iteration: " << iteration << ". Error: " << wholeError << endl;
+        LOG << "Iteration: " << iteration
+            << ". Absolute error: " << absoluteError
+            << ",\tRelative error: " << relativeError << endl;
     }
 }

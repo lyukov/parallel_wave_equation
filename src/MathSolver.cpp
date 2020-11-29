@@ -85,7 +85,7 @@ void MathSolver::fillByU(Grid3D &grid, int n, int start_i, int start_j, int star
     }
 }
 
-double MathSolver::C_norm_inner(const Grid3D &grid, const Grid3D &another) const {
+double MathSolver::maxAbsoluteErrorInner(const Grid3D &grid, const Grid3D &another) const {
     double c_norm = 0;
     for (int i = 1; i < grid.shape[0] - 1; ++i) {
         for (int j = 1; j < grid.shape[1] - 1; ++j) {
@@ -98,6 +98,23 @@ double MathSolver::C_norm_inner(const Grid3D &grid, const Grid3D &another) const
         }
     }
     return c_norm;
+}
+
+double MathSolver::maxRelativeErrorInner(const Grid3D &grid, const Grid3D &another) const {
+    double error = 0;
+    for (int i = 1; i < grid.shape[0] - 1; ++i) {
+        for (int j = 1; j < grid.shape[1] - 1; ++j) {
+            for (int k = 1; k < grid.shape[2] - 1; ++k) {
+                double relative_error = another(i, j, k) == 0 ? 0 :
+                                        1 - std::abs(grid(i, j, k) / another(i, j, k));
+                error = max(
+                        relative_error,
+                        error
+                );
+            }
+        }
+    }
+    return error;
 }
 
 std::ostream &operator<<(std::ostream &out, const MathSolver &solver) {
