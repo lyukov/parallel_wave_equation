@@ -3,6 +3,7 @@
 //
 
 #include "MPIProxy.h"
+#include "utils.h"
 #include <mpi.h>
 
 MPIProxy::MPIProxy(int *argc, char ***argv) {

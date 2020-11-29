@@ -31,10 +31,12 @@ public:
 
     void writeToFile(std::ofstream &outFile) const;
 
-private:
-    int _cfI, _cfJ; // Coefficients for indexing
+    const std::vector<double> &getFlatten() const;
 
+private:
     std::vector<double> raw;
+
+    int _cfI, _cfJ; // Coefficients for indexing
 
     inline int _index(int i, int j, int k) const { return i * _cfI + j * _cfJ + k; }
 

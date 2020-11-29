@@ -11,14 +11,12 @@ public:
 
     void init_1(Grid3D &grid, int start_i, int start_j, int start_k) const;
 
-    void init_2(Grid3D &grid, int start_i, int start_j, int start_k) const;
+    void init_2(Grid3D &grid, Grid3D &previous) const;
 
     /** Fills n-th grid of grid. It depends on two previous layers. */
     void makeStepForInnerNodes(Grid3D &grid, const Grid3D &previous_1, const Grid3D &previous_2) const;
 
-    double laplacian(const Grid3D &g, int i, int j, int k) const;
-
-    void fillByU(Grid3D &grid, int n, int start_i, int start_j, int start_k) const;
+    void fillByGroundTruth(Grid3D &grid, int n, int start_i, int start_j, int start_k) const;
 
     double maxAbsoluteErrorInner(const Grid3D &grid, const Grid3D &another) const;
 
@@ -28,7 +26,7 @@ private:
     const U u;
     const Phi phi;
 
-    const int N;
+    const int _N;
     const int K;
 
     /* Grid steps */
@@ -38,6 +36,10 @@ private:
     const double tau;
 
     friend std::ostream &operator<<(std::ostream &out, const MathSolver &solver);
+
+    double laplacian(const Grid3D &g, int i, int j, int k) const;
+
+    double laplacian(const Phi &phi, double x, double y, double z, double h) const;
 };
 
 std::ostream &operator<<(std::ostream &out, const MathSolver &solver);

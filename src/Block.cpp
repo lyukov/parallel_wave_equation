@@ -17,6 +17,9 @@ Block::Block(
 ) : solver(solver), mpi(mpi) {
     int blockId = mpi->getRank();
     iteration = 0;
+    isPeriodicalCondition[0] = true;
+    isPeriodicalCondition[1] = false;
+    isPeriodicalCondition[2] = true;
     block_coords[0] = blockId / (splits_Y * splits_Z);
     block_coords[1] = (blockId - splits_Y * splits_Z * block_coords[0]) / splits_Z;
     block_coords[2] = blockId % splits_Z;
@@ -29,9 +32,6 @@ Block::Block(
     start[0] = block_coords[0] * (N / n_splits[0]);
     start[1] = block_coords[1] * (N / n_splits[1]);
     start[2] = block_coords[2] * (N / n_splits[2]);
-    isPeriodicalCondition[0] = true;
-    isPeriodicalCondition[1] = false;
-    isPeriodicalCondition[2] = true;
 
     for (int i = 0; i < N_GRIDS; ++i) {
         grids.push_back(
@@ -53,9 +53,11 @@ void Block::makeStep(bool shareBorders) {
         );
     } else if (iteration == 2) {
         solver->init_2(
-                grids[iteration % N_GRIDS],
-                start[0] - 1, start[1] - 1, start[2] - 1
+                grids[iteration % N_GRIDS], grids[(iteration - 1) % N_GRIDS]
         );
+        if (shareBorders) {
+            syncWithNeighbors();
+        }
     } else {
         solver->makeStepForInnerNodes(
                 grids[iteration % N_GRIDS],
@@ -69,37 +71,37 @@ void Block::makeStep(bool shareBorders) {
 }
 
 void Block::syncWithNeighbors() {
+    std::vector<double> buf;
     for (int axis = 0; axis < 3; ++axis) {
         for (int direction = -1; direction <= 1; direction += 2) {
-            sendToNeighbors(axis, direction);
-            receiveFromNeighbors(axis, -direction);
+            sendToNeighbor(axis, direction, buf);
+            receiveFromNeighbor(axis, -direction);
+            mpi->barrier();
         }
     }
 }
 
-void Block::sendToNeighbors(int axis, int direction) {
+void Block::sendToNeighbor(int axis, int direction, std::vector<double> &buf) {
     int neighborId = getNeighborId(axis, direction);
-    std::vector<double> sliceSnd;
     if (neighborId != -1) {
         int index = direction == -1 ? 1 : shape[axis] - 2;
-        sliceSnd = grids[iteration % N_GRIDS].getSlice(index, axis);
-        mpi->sendVector(sliceSnd, neighborId);
-        LOG_DEBUG << "Sending array. Max: " << max(sliceSnd)
-                  << ", axis = " << axis << ", direction = " << direction << endl;
+        buf = grids[iteration % N_GRIDS].getSlice(index, axis);
+        mpi->sendVector(buf, neighborId);
+//        LOG_DEBUG << "Sending array. Max: " << max(buf)
+//                  << ", axis = " << axis << ", direction = " << direction << endl;
     }
 }
 
-void Block::receiveFromNeighbors(int axis, int direction) {
+void Block::receiveFromNeighbor(int axis, int direction) {
     Grid3D &grid = grids[iteration % N_GRIDS];
-    int neighbor = getNeighborId(axis, direction);
-    if (neighbor != -1) {
+    int neighborId = getNeighborId(axis, direction);
+    if (neighborId != -1) {
+        std::vector<double> slice = mpi->receiveVector(grid.getSliceSize(axis), neighborId);
+//        LOG_DEBUG << "Received array. Max: " << max(slice)
+//                  << ", axis = " << axis << ", direction = " << direction << endl;
         int index = direction == -1 ? 0 : shape[axis] - 1;
-        std::vector<double> sliceRcv = mpi->receiveVector(grid.getSliceSize(axis), neighbor);
-        LOG_DEBUG << "Received array. Max: " << max(sliceRcv)
-                  << ", axis = " << axis << ", direction = " << direction << endl;
-        grid.setSlice(index, axis, sliceRcv);
+        grid.setSlice(index, axis, slice);
     }
-    mpi->barrier();
 }
 
 int Block::getNeighborId(int axis, int direction) const {
@@ -119,12 +121,13 @@ void Block::printError(Grid3D &groundTruth) const {
             solver->maxAbsoluteErrorInner(getCurrentState(), groundTruth)
     );
     mpi->barrier();
-    double relativeError = mpi->maxOverAll(
-            solver->maxRelativeErrorInner(getCurrentState(), groundTruth)
-    );
+    double maxGt = mpi->maxOverAll(max(groundTruth.getFlatten()));
+//    double relativeError = mpi->maxOverAll(
+//            solver->maxRelativeErrorInner(getCurrentState(), groundTruth)
+//    );
     if (mpi->isMainProcess()) {
         LOG << "Iteration: " << iteration
-            << ". Absolute error: " << absoluteError
-            << ",\tRelative error: " << relativeError << endl;
+            << ". Max error: " << absoluteError
+            << "\tMax GT: " << maxGt << endl;
     }
 }

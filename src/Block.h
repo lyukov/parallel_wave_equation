@@ -37,7 +37,7 @@ private:
 
     int getNeighborId(int axis, int direction) const;
 
-    void sendToNeighbors(int axis, int direction);
+    void sendToNeighbor(int axis, int direction, std::vector<double> &buf);
 
-    void receiveFromNeighbors(int axis, int direction);
+    void receiveFromNeighbor(int axis, int direction);
 };

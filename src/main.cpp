@@ -56,9 +56,9 @@ int main(int argc, char **argv) {
 
     Grid3D groundTruth(block.shape[0], block.shape[1], block.shape[2]);
 
-    for (int iter = 0; iter < K; ++iter) {
-        block.makeStep();
-        solver.fillByU(
+    for (int iter = 0; iter <= K; ++iter) {
+        block.makeStep(iter != K);
+        solver.fillByGroundTruth(
                 groundTruth,
                 iter,
                 block.start[0] - 1,

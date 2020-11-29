@@ -36,3 +36,6 @@ std::ostream &operator<<(std::ostream &out, const std::vector<T> &vec) {
     }
     return out << "]";
 }
+
+template<typename T>
+inline T sqr(T x) { return x * x; }
