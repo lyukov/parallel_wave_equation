@@ -27,6 +27,8 @@ public:
 
     void setSlice(int index, int axis, const std::vector<double> &slice);
 
+    void setZeros(int index, int axis);
+
     void writeToFile(std::ofstream &outFile) const;
 
 private:

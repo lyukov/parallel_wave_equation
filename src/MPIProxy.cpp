@@ -44,3 +44,7 @@ int MPIProxy::getNumOfProcessors() const {
     MPI_Comm_size(MPI_COMM_WORLD, &n_proc);
     return n_proc;
 }
+
+void MPIProxy::barrier() const {
+    MPI_Barrier(MPI_COMM_WORLD);
+}

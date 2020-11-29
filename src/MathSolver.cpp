@@ -19,7 +19,7 @@ MathSolver::MathSolver(double T, double L_x, double L_y, double L_z, int N, int 
         << "tau = " << tau << endl;
 }
 
-void MathSolver::init_0(Grid3D &grid, int start_i, int start_j, int start_k) const {
+void MathSolver::init_1(Grid3D &grid, int start_i, int start_j, int start_k) const {
     // Initialize zero level
     for (int i = 0; i < grid.shape[0]; ++i) {
         for (int j = 0; j < grid.shape[1]; ++j) {
@@ -35,7 +35,7 @@ void MathSolver::init_0(Grid3D &grid, int start_i, int start_j, int start_k) con
     LOG << "Level 0 initialized\n";
 }
 
-void MathSolver::init_1(Grid3D &grid, int start_i, int start_j, int start_k) const {
+void MathSolver::init_2(Grid3D &grid, int start_i, int start_j, int start_k) const {
     // Initialize first level
     for (int i = 0; i < grid.shape[0]; ++i) {
         for (int j = 0; j < grid.shape[1]; ++j) {
@@ -65,9 +65,16 @@ void MathSolver::makeStepForInnerNodes(Grid3D &grid, const Grid3D &previous_1, c
     for (int i = 1; i < grid.shape[0] - 1; ++i) {
         for (int j = 1; j < grid.shape[1] - 1; ++j) {
             for (int k = 1; k < grid.shape[2] - 1; ++k) {
-                grid(i, j, k) = 2 * previous_1(i, j, k) -
+                double result = 2 * previous_1(i, j, k) -
                                 previous_2(i, j, k) +
                                 tau * tau * laplacian(previous_1, i, j, k);
+                if (abs(result) > 100) {
+                    LOG << result << " " << i << " " << j << " " <<  k << endl;
+                    LOG << previous_1(i, j, k) << " "
+                        << previous_2(i, j, k) << " "
+                        << laplacian(previous_1, i, j, k) << endl;
+                }
+                grid(i, j, k) = result;
             }
         }
     }

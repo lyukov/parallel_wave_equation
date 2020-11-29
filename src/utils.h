@@ -2,13 +2,15 @@
 
 #include <string>
 #include <iostream>
+#include <sys/types.h>
+#include <unistd.h>
 
 using std::endl;
 
 std::string getTimestamp();
 
-#define LOG std::cout << getTimestamp() << " : "
-#define LOG_ERR std::cerr << getTimestamp() << " : "
+#define LOG std::cout << getTimestamp() << " " << getpid() << " : "
+#define LOG_ERR std::cerr << getTimestamp() << " " << getpid() << " : "
 
 template<typename T>
 inline T max(T one, T other) { return one > other ? one : other; }

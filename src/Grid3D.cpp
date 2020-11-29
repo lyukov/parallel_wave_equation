@@ -88,3 +88,25 @@ void Grid3D::setSlice(int index, int axis, const std::vector<double> &slice) {
         }
     }
 }
+
+void Grid3D::setZeros(int index, int axis) {
+    if (axis == 0) {
+        for (int j = 0; j < shape[1]; ++j) {
+            for (int k = 0; k < shape[2]; ++k) {
+                (*this)(index, j, k) = 0.0;
+            }
+        }
+    } else if (axis == 1) {
+        for (int i = 0; i < shape[0]; ++i) {
+            for (int k = 0; k < shape[2]; ++k) {
+                (*this)(i, index, k) = 0.0;
+            }
+        }
+    } else {
+        for (int i = 0; i < shape[0]; ++i) {
+            for (int j = 0; j < shape[1]; ++j) {
+                (*this)(i, j, index) = 0.0;
+            }
+        }
+    }
+}

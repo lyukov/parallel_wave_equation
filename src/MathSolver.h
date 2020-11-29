@@ -7,9 +7,9 @@ class MathSolver {
 public:
     MathSolver(double T, double L_x, double L_y, double L_z, int N, int K, U u, Phi phi);
 
-    void init_0(Grid3D &grid, int start_i, int start_j, int start_k) const;
-
     void init_1(Grid3D &grid, int start_i, int start_j, int start_k) const;
+
+    void init_2(Grid3D &grid, int start_i, int start_j, int start_k) const;
 
     /** Fills n-th grid of grid. It depends on two previous layers. */
     void makeStepForInnerNodes(Grid3D &grid, const Grid3D &previous_1, const Grid3D &previous_2) const;

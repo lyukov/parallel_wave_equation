@@ -20,6 +20,7 @@ public:
 
     int getMainProcId() const { return 0; }
 
+    void barrier() const;
 private:
     MPIProxy(const MPIProxy &); // non construction-copyable
     MPIProxy &operator=(const MPIProxy &); // non copyable

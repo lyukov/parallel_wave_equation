@@ -37,4 +37,8 @@ private:
     void syncWithNeighbors();
 
     int getNeighborId(int axis, int direction) const;
+
+    void sendToNeighbors(int axis, int direction);
+
+    void receiveFromNeighbors(int axis, int direction);
 };
