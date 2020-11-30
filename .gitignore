@@ -7,3 +7,5 @@ cmake-build-debug
 .idea
 a.out.dSYM
 bin
+*.gif
+*.csv
