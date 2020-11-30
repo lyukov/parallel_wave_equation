@@ -20,6 +20,8 @@ public:
 
     double maxAbsoluteErrorInner(const Grid3D &grid, const Grid3D &another) const;
 
+    double sumSquaredErrorInner(const Grid3D &grid, const Grid3D &another) const;
+
     double maxRelativeErrorInner(const Grid3D &grid, const Grid3D &another) const;
 
 private:

@@ -23,6 +23,7 @@ public:
     void printError(Grid3D &groundTruth) const;
 
 private:
+    int N;
     int block_coords[3];
     int n_splits[3];   // Number of blocks
     bool isPeriodicalCondition[3];

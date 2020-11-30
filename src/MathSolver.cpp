@@ -91,6 +91,18 @@ double MathSolver::maxAbsoluteErrorInner(const Grid3D &grid, const Grid3D &anoth
     return c_norm;
 }
 
+double MathSolver::sumSquaredErrorInner(const Grid3D &grid, const Grid3D &another) const {
+    double sum = 0;
+    for (int i = 1; i < grid.shape[0] - 1; ++i) {
+        for (int j = 1; j < grid.shape[1] - 1; ++j) {
+            for (int k = 1; k < grid.shape[2] - 1; ++k) {
+                sum += sqr(grid(i, j, k) - another(i, j, k));
+            }
+        }
+    }
+    return sum;
+}
+
 double MathSolver::maxRelativeErrorInner(const Grid3D &grid, const Grid3D &another) const {
     double reduced = 0.0;
     for (int i = 1; i < grid.shape[0] - 1; ++i) {

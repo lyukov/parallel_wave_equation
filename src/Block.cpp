@@ -14,7 +14,7 @@ Block::Block(
         MathSolver *solver,
         int splits_X, int splits_Y, int splits_Z,
         int N
-) : solver(solver), mpi(mpi) {
+) : solver(solver), mpi(mpi), N(N) {
     int blockId = mpi->getRank();
     iteration = 0;
     isPeriodicalCondition[0] = true;
@@ -121,10 +121,18 @@ void Block::printError(Grid3D &groundTruth) const {
             solver->maxAbsoluteErrorInner(getCurrentState(), groundTruth)
     );
     mpi->barrier();
-    double maxGt = mpi->maxOverAll(max(groundTruth.getFlatten()));
+    double sumSquaredError = mpi->sumOverAll(
+            solver->sumSquaredErrorInner(getCurrentState(), groundTruth)
+    );
+    double mse = sumSquaredError / (N * N * N);
+    mpi->barrier();
+    double maxGt = mpi->maxOverAll(
+            max(groundTruth.getFlatten())
+    );
     if (mpi->isMainProcess()) {
         LOG << "Iteration: " << iteration
-            << ". Max error: " << absoluteError
-            << "\tMax GT: " << maxGt << endl;
+            << ". \tC1: " << absoluteError
+            << " \tMSE: " << mse
+            << " \tMax GT: " << maxGt << endl;
     }
 }

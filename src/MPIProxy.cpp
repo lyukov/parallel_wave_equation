@@ -8,16 +8,11 @@
 
 MPIProxy::MPIProxy(int *argc, char ***argv) {
     MPI_Init(argc, argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &_rank);
 }
 
 MPIProxy::~MPIProxy() {
     MPI_Finalize();
-}
-
-int MPIProxy::getRank() const {
-    int rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    return rank;
 }
 
 void MPIProxy::sendVector(std::vector<double> &data, int receiver) const {
@@ -46,6 +41,12 @@ double MPIProxy::receiveDouble(int sender) const {
 double MPIProxy::maxOverAll(double value) const {
     double result;
     MPI_Reduce(&value, &result, 1, MPI_DOUBLE, MPI_MAX, getMainProcId(), MPI_COMM_WORLD);
+    return result;
+}
+
+double MPIProxy::sumOverAll(double value) const {
+    double result;
+    MPI_Reduce(&value, &result, 1, MPI_DOUBLE, MPI_SUM, getMainProcId(), MPI_COMM_WORLD);
     return result;
 }
 

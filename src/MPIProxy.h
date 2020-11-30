@@ -8,7 +8,7 @@ public:
 
     ~MPIProxy();
 
-    int getRank() const;
+    int getRank() const { return _rank; }
 
     int getNumOfProcessors() const;
 
@@ -22,6 +22,8 @@ public:
 
     double maxOverAll(double value) const;
 
+    double sumOverAll(double value) const;
+
     int getMainProcId() const { return 0; }
 
     bool isMainProcess() const;
@@ -29,7 +31,10 @@ public:
     double time() const;
 
     void barrier() const;
+
 private:
+    int _rank;
+
     MPIProxy(const MPIProxy &); // non construction-copyable
     MPIProxy &operator=(const MPIProxy &); // non copyable
 };
