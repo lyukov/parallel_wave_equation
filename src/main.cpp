@@ -37,7 +37,10 @@ int main(int argc, char **argv) {
     MPIProxy mpi(&argc, &argv);
     double startTime = mpi.time();
     int nProcessors = mpi.getNumOfProcessors();
-    assert(nProcessors == splits_X * splits_Y * splits_Z);
+    if (nProcessors != splits_X * splits_Y * splits_Z) {
+        LOG_ERR << "Incorrect num of processors" << endl;
+        return 1;
+    }
     // LOG_DEBUG << "MPI Proxy created. Rank: " << mpi.getRank() << ". Processors: " << nProcessors << endl;
 
     Phi phi(L_x, L_y, L_z);
