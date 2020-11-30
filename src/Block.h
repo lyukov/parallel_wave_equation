@@ -16,11 +16,11 @@ public:
 
     Block(MPIProxy *mpi, MathSolver *solver, int splits_X, int splits_Y, int splits_Z, int N);
 
-    void makeStep(bool shareBorders = true);
+    void makeStep();
 
     const Grid3D &getCurrentState() const;
 
-    void printError(Grid3D &groundTruth) const;
+    double printError(Grid3D &groundTruth) const;
 
 private:
     int N;

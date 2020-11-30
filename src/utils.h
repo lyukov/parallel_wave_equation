@@ -16,6 +16,8 @@ std::string getTimestamp();
 #define LOG_ERR   std::cerr << _LOG << " ERROR : "
 #define LOG_DEBUG std::cout << _LOG << " DEBUG : "
 
+#define TAB "\t"
+
 template<typename T>
 inline T max(T one, T other) { return one > other ? one : other; }
 

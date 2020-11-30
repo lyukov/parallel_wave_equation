@@ -41,18 +41,17 @@ Block::Block(
 }
 
 const Grid3D &Block::getCurrentState() const {
-    return grids[iteration % N_GRIDS];
+    return grids[(iteration + N_GRIDS - 1) % N_GRIDS];
 }
 
-void Block::makeStep(bool shareBorders) {
-    iteration++;
-    if (iteration == 1) {
-        solver->init_1(
+void Block::makeStep() {
+    if (iteration == 0) {
+        solver->init_0(
                 grids[iteration % N_GRIDS],
                 start[0] - 1, start[1] - 1, start[2] - 1
         );
-    } else if (iteration == 2) {
-        solver->init_2(
+    } else if (iteration == 1) {
+        solver->init_1(
                 grids[iteration % N_GRIDS], grids[(iteration - 1) % N_GRIDS]
         );
     } else {
@@ -62,9 +61,8 @@ void Block::makeStep(bool shareBorders) {
                 grids[(iteration - 2) % N_GRIDS]
         );
     }
-    if (shareBorders) {
-        syncWithNeighbors();
-    }
+    syncWithNeighbors();
+    iteration++;
 }
 
 void Block::syncWithNeighbors() {
@@ -92,13 +90,17 @@ void Block::sendToNeighbor(int axis, int direction, std::vector<double> &buf) {
 void Block::receiveFromNeighbor(int axis, int direction) {
     Grid3D &grid = grids[iteration % N_GRIDS];
     int neighborId = getNeighborId(axis, direction);
+    std::vector<double> slice;
+    int sliceSize = grid.getSliceSize(axis);
     if (neighborId != -1) {
-        std::vector<double> slice = mpi->receiveVector(grid.getSliceSize(axis), neighborId);
+        slice = mpi->receiveVector(sliceSize, neighborId);
 //        LOG_DEBUG << "Received array. Max: " << max(slice)
 //                  << ", axis = " << axis << ", direction = " << direction << endl;
-        int index = direction == -1 ? 0 : shape[axis] - 1;
-        grid.setSlice(index, axis, slice);
+    } else {
+        slice = std::vector<double>(sliceSize, 0.0);
     }
+    int index = direction == -1 ? 0 : shape[axis] - 1;
+    grid.setSlice(index, axis, slice);
 }
 
 int Block::getNeighborId(int axis, int direction) const {
@@ -115,7 +117,7 @@ int Block::getNeighborId(int axis, int direction) const {
            neighbor[2];
 }
 
-void Block::printError(Grid3D &groundTruth) const {
+double Block::printError(Grid3D &groundTruth) const {
     //if (iteration % 10) return;
     double absoluteError = mpi->maxOverAll(
             solver->maxAbsoluteErrorInner(getCurrentState(), groundTruth)
@@ -135,4 +137,5 @@ void Block::printError(Grid3D &groundTruth) const {
             << " \tMSE: " << mse
             << " \tMax GT: " << maxGt << endl;
     }
+    return absoluteError;
 }
