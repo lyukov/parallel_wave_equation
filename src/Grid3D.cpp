@@ -34,7 +34,7 @@ double Grid3D::operator()(int i, int j, int k) const {
 }
 
 void Grid3D::writeToFile(const std::string& fileName) const {
-    std::ofstream outFile(fileName, std::ios::out | std::ios::binary);
+    std::ofstream outFile(fileName.c_str(), std::ios::out | std::ios::binary);
     outFile.write((char *) raw.data(), size * sizeof(double));
     outFile.close();
 }
