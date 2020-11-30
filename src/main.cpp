@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <cstdlib>
 
 #include "MathSolver.h"
 #include "functions.h"
