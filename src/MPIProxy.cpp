@@ -20,7 +20,7 @@ int MPIProxy::getRank() const {
     return rank;
 }
 
-void MPIProxy::sendVector(const std::vector<double> &data, int receiver) const {
+void MPIProxy::sendVector(std::vector<double> &data, int receiver) const {
     MPI_Request dummyRequest;
     MPI_Isend(data.data(), data.size(), MPI_DOUBLE, receiver, 0, MPI_COMM_WORLD, &dummyRequest);
 }
