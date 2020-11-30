@@ -37,6 +37,9 @@ int main(int argc, char **argv) {
     MPIProxy mpi(&argc, &argv);
     double startTime = mpi.time();
     int nProcessors = mpi.getNumOfProcessors();
+    if (mpi.isMainProcess()) {
+        LOG << "Num of processors: " << nProcessors << endl;
+    }
     if (nProcessors != splits_X * splits_Y * splits_Z) {
         LOG_ERR << "Incorrect num of processors" << endl;
         return 1;
