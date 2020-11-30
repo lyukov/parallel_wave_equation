@@ -18,11 +18,11 @@ Grid3D::Grid3D(int N) : size(N * N * N), _cfI(N * N), _cfJ(N) {
 
 void Grid3D::init() {
     raw.resize(size);
-    LOG_DEBUG << "Created raw array of size " << size << std::endl;
+    // LOG_DEBUG << "Created raw array of size " << size << std::endl;
 }
 
 Grid3D::~Grid3D() {
-    LOG_DEBUG << "Grid3D::~Grid3D()" << std::endl;
+    // LOG_DEBUG << "Grid3D::~Grid3D()" << std::endl;
 }
 
 double &Grid3D::operator()(int i, int j, int k) {

@@ -116,6 +116,7 @@ int Block::getNeighborId(int axis, int direction) const {
 }
 
 void Block::printError(Grid3D &groundTruth) const {
+    //if (iteration % 10) return;
     double absoluteError = mpi->maxOverAll(
             solver->maxAbsoluteErrorInner(getCurrentState(), groundTruth)
     );

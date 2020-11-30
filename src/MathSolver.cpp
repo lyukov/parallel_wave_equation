@@ -25,7 +25,6 @@ void MathSolver::init_1(Grid3D &grid, int start_i, int start_j, int start_k) con
             }
         }
     }
-    LOG_DEBUG << "Level 1 initialized\n";
 }
 
 void MathSolver::init_2(Grid3D &grid, Grid3D &previous) const {
@@ -38,7 +37,6 @@ void MathSolver::init_2(Grid3D &grid, Grid3D &previous) const {
             }
         }
     }
-    LOG_DEBUG << "Level 2 initialized\n";
 }
 
 double MathSolver::laplacian(const Grid3D &g, int i, int j, int k) const {

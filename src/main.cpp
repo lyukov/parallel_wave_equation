@@ -18,8 +18,8 @@ std::string getTimestamp() {
 
 int main(int argc, char **argv) {
     if (argc <= 7) {
-        LOG_ERR << "argc = " << argc << endl;
-        LOG_ERR << "Usage: wave L T N K splits_X splits_Y splits_Z" << endl;
+         LOG_ERR << "argc = " << argc << endl;
+         LOG_ERR << "Usage: wave L T N K splits_X splits_Y splits_Z" << endl;
         return 0;
     }
 
@@ -31,13 +31,13 @@ int main(int argc, char **argv) {
     int splits_Y = atoi(argv[6]);
     int splits_Z = atoi(argv[7]);
     double L_x = L, L_y = L, L_z = L;
-    LOG_DEBUG << "Parameters parsed successfully\n";
+    // LOG_DEBUG << "Parameters parsed successfully\n";
 
     MPIProxy mpi(&argc, &argv);
     double startTime = mpi.time();
     int nProcessors = mpi.getNumOfProcessors();
     assert(nProcessors == splits_X * splits_Y * splits_Z);
-    LOG_DEBUG << "MPI Proxy created. Rank: " << mpi.getRank() << ". Processors: " << nProcessors << endl;
+    // LOG_DEBUG << "MPI Proxy created. Rank: " << mpi.getRank() << ". Processors: " << nProcessors << endl;
 
     Phi phi(L_x, L_y, L_z);
     U u(L_x, L_y, L_z);
@@ -47,8 +47,8 @@ int main(int argc, char **argv) {
         LOG << solver << endl;
     }
     Block block(&mpi, &solver, splits_X, splits_Y, splits_Z, N);
-    LOG_DEBUG << "Block created" << endl;
-    LOG_DEBUG << "Initialization successfully completed" << endl;
+    // LOG_DEBUG << "Block created" << endl;
+    // LOG_DEBUG << "Initialization successfully completed" << endl;
 
     Grid3D groundTruth(block.shape[0], block.shape[1], block.shape[2]);
 
