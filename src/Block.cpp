@@ -82,25 +82,22 @@ void Block::sendToNeighbor(int axis, int direction, std::vector<double> &buf) {
         int index = direction == -1 ? 1 : shape[axis] - 2;
         buf = grids[iteration % N_GRIDS].getSlice(index, axis);
         mpi->sendVector(buf, neighborId);
-//        LOG_DEBUG << "Sending array. Max: " << max(buf)
-//                  << ", axis = " << axis << ", direction = " << direction << endl;
     }
 }
 
 void Block::receiveFromNeighbor(int axis, int direction) {
     Grid3D &grid = grids[iteration % N_GRIDS];
     int neighborId = getNeighborId(axis, direction);
-    std::vector<double> slice;
-    int sliceSize = grid.getSliceSize(axis);
     if (neighborId != -1) {
-        slice = mpi->receiveVector(sliceSize, neighborId);
-//        LOG_DEBUG << "Received array. Max: " << max(slice)
-//                  << ", axis = " << axis << ", direction = " << direction << endl;
+        int sliceSize = grid.getSliceSize(axis);
+        std::vector<double> slice = mpi->receiveVector(sliceSize, neighborId);
+        int index = direction == -1 ? 0 : shape[axis] - 1;
+        grid.setSlice(index, axis, slice);
     } else {
-        slice = std::vector<double>(sliceSize, 0.0);
+        // Zero border conditions
+        int index = direction == -1 ? 1 : shape[axis] - 1;
+        grid.setZeros(index, axis);
     }
-    int index = direction == -1 ? 0 : shape[axis] - 1;
-    grid.setSlice(index, axis, slice);
 }
 
 int Block::getNeighborId(int axis, int direction) const {

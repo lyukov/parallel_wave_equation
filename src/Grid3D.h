@@ -15,8 +15,6 @@ public:
 
     Grid3D(int N1, int N2, int N3);
 
-    ~Grid3D();
-
     double &operator()(int i, int j, int k);
 
     double operator()(int i, int j, int k) const;

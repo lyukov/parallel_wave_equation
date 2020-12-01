@@ -33,7 +33,6 @@ int main(int argc, char **argv) {
     int splits_Z = atoi(argv[7]);
     std::string label(argv[8]);
     double L_x = L, L_y = L, L_z = L;
-    // LOG_DEBUG << "Parameters parsed successfully\n";
 
     std::stringstream csvOut;
 
@@ -58,8 +57,6 @@ int main(int argc, char **argv) {
         LOG << solver << endl;
     }
     Block block(&mpi, &solver, splits_X, splits_Y, splits_Z, N);
-    // LOG_DEBUG << "Block created" << endl;
-    // LOG_DEBUG << "Initialization successfully completed" << endl;
 
     Grid3D groundTruth(block.shape[0], block.shape[1], block.shape[2]);
 
@@ -76,12 +73,14 @@ int main(int argc, char **argv) {
         error = block.printError(groundTruth);
     }
 
-//    std::stringstream ss;
-//    ss << "block_" << mpi.getRank();
-//    block.getCurrentState().writeToFile(ss.str());
-//
-//    ss << "_gt";
-//    groundTruth.writeToFile(ss.str());
+    /* Save result as binary file */
+    if (label == "dump") {
+        std::stringstream ss;
+        ss << "block_" << mpi.getRank();
+        block.getCurrentState().writeToFile(ss.str());
+        ss << "_gt";
+        groundTruth.writeToFile(ss.str());
+    }
 
     mpi.barrier();
     double duration = mpi.time() - startTime;
