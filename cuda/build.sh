@@ -1,0 +1,1 @@
+nvcc -O3 -gencode arch=compute_52,code=sm_52 -gencode arch=compute_60,code=sm_60 src/main.cu -o bin/vecadd

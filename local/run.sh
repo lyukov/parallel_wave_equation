@@ -1,1 +1,0 @@
-mpirun -n 1 bin/wave 1 1 1 1 100 20 1 1 1

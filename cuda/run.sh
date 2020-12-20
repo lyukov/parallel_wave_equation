@@ -1,0 +1,1 @@
+mpisubmit.pl -p 1 -g bin/vecadd
