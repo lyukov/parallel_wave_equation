@@ -2,11 +2,12 @@
 
 using std::endl;
 
-__global__ void sum_kernel(int *A, int *B, int *C) {
-    //определить свой индекс int a = A[idx]; //считать нужный элемент A
+__global__ void sum_kernel(double *A, double *B, double *C, int N) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    int b = B[idx]; // считать нужный элемент B
-    C[idx] = a + b; //записать результат суммирования
+    if (idx >= N) { return; }
+    double a = A[idx];
+    double b = B[idx];
+    C[idx] = a + b;
 }
 
 int main(int argc, char **argv) {
