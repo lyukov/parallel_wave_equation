@@ -44,8 +44,14 @@ void step(double *grid, double *previous_1, double *previous_2) {
     int j = blockIdx.y * blockDim.y + threadIdx.y + 1;
     int k = blockIdx.z * blockDim.z + threadIdx.z + 1;
     int index = i * d_cfI + j * d_cfJ + k;
+
+    double center = previous_1[index];
+    double laplacian = (previous_1[index - d_cfI] - 2.0 * center + previous_1[index + d_cfI]) / (d_h_x * d_h_x) +
+                       (previous_1[index - d_cfJ] - 2.0 * center + previous_1[index + d_cfJ]) / (d_h_y * d_h_y) +
+                       (previous_1[index - 1] - 2.0 * center + previous_1[index + 1]) / (d_h_z * d_h_z);
+
     grid[index] = 2.0 * previous_1[index] - previous_2[index] +
-                  d_sqr_tau * laplacian(previous_1, index);
+                  d_sqr_tau * laplacian;
 }
 
 void makeStepWithCuda(Grid3D &grid, Grid3D &previous_1, Grid3D &previous_2,
