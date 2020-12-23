@@ -30,17 +30,17 @@ __constant__ double d_h_y;
 __constant__ double d_h_z;
 __constant__ double d_sqr_tau;
 
-__global__
+__device__
 double &get_at(double *g, int i, int j, int k) {
     return g[i * d_cfI + j * d_cfJ + k];
 }
 
-__global__
+__device__
 double laplacian(double *g, int i, int j, int k) {
     double center = get_at(g, i, j, k);
-    return (get_at(g, i - 1, j, k) - 2.0 * center + get_at(g, i + 1, j, k)) / sqr(d_h_x) +
-           (get_at(g, i, j - 1, k) - 2.0 * center + get_at(g, i, j + 1, k)) / sqr(d_h_y) +
-           (get_at(g, i, j, k - 1) - 2.0 * center + get_at(g, i, j, k + 1)) / sqr(d_h_z);
+    return (get_at(g, i - 1, j, k) - 2.0 * center + get_at(g, i + 1, j, k)) / (d_h_x * d_h_x) +
+           (get_at(g, i, j - 1, k) - 2.0 * center + get_at(g, i, j + 1, k)) / (d_h_y * d_h_y) +
+           (get_at(g, i, j, k - 1) - 2.0 * center + get_at(g, i, j, k + 1)) / (d_h_z * d_h_z);
 }
 
 __global__
@@ -52,7 +52,7 @@ void step(double *grid, double *previous_1, double *previous_2) {
                             d_sqr_tau * laplacian(previous_1, i, j, k);
 }
 
-void makeStepWithCuda(Grid3D &grid, const Grid3D &previous_1, const Grid3D &previous_2,
+void makeStepWithCuda(Grid3D &grid, Grid3D &previous_1, Grid3D &previous_2,
                       double h_x, double h_y, double h_z, double sqr_tau) {
     dim3 blockSize = dim3(
             1,
@@ -67,7 +67,9 @@ void makeStepWithCuda(Grid3D &grid, const Grid3D &previous_1, const Grid3D &prev
 
     size_t sizeInBytes = sizeof(double) * grid.size;
 
-    double *d_grid, d_previous_1, d_previous_2;
+    double *d_grid;
+    double *d_previous_1;
+    double *d_previous_2;
     SAFE_CALL(cudaMalloc((void **) &d_grid, sizeInBytes));
     SAFE_CALL(cudaMalloc((void **) &d_previous_1, sizeInBytes));
     SAFE_CALL(cudaMalloc((void **) &d_previous_2, sizeInBytes));
@@ -82,7 +84,7 @@ void makeStepWithCuda(Grid3D &grid, const Grid3D &previous_1, const Grid3D &prev
     cudaMemcpyToSymbol(d_h_z, &h_z, sizeof(double));
     cudaMemcpyToSymbol(d_sqr_tau, &sqr_tau, sizeof(double));
 
-    SAFE_KERNEL_CALL(step<<<gridInBlocks, blockSize>>>(d_grid, d_previous_1, d_previous_2));
+    step<<<gridInBlocks, blockSize>>>(d_grid, d_previous_1, d_previous_2);
 
-    SAFE_CALL(cudaMemcpy(grid.getFlatten().data(), d_block, sizeInBytes, cudaMemcpyDeviceToHost));
+    SAFE_CALL(cudaMemcpy(grid.getFlatten().data(), d_grid, sizeInBytes, cudaMemcpyDeviceToHost));
 }
