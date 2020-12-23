@@ -1,0 +1,1 @@
+mpisubmit.pl -p 1 -g -- nvprof -f -o timeline.nvvp ./cuda_wave 1 0.025 256 20 1 1 1 cuda

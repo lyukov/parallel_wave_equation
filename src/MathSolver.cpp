@@ -62,7 +62,7 @@ void MathSolver::makeStepForInnerNodes(Grid3D &grid, const Grid3D &previous_1, c
                 double result = 2.0 * previous_1(i, j, k) - previous_2(i, j, k) +
                                 sqr(tau) * laplacian(previous_1, i, j, k);
                 if (grid(i, j, k) != result) {
-                    LOG << "unmatch: " << grid(i, j, k) << " " << result;
+                    LOG << "unmatch: " << grid(i, j, k) << " " << result << endl;
                 }
             }
         }
