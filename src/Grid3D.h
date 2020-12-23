@@ -29,12 +29,12 @@ public:
 
     void writeToFile(const std::string& fileName) const;
 
-    const std::vector<double> &getFlatten() const;
-
-private:
-    std::vector<double> raw;
+    std::vector<double> & getFlatten();
 
     int _cfI, _cfJ; // Coefficients for indexing
+private:
+
+    std::vector<double> raw;
 
     inline int _index(int i, int j, int k) const { return i * _cfI + j * _cfJ + k; }
 

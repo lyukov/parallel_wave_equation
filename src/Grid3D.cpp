@@ -108,6 +108,6 @@ void Grid3D::setZeros(int index, int axis) {
     }
 }
 
-const std::vector<double> &Grid3D::getFlatten() const {
+std::vector<double> & Grid3D::getFlatten() {
     return raw;
 }
