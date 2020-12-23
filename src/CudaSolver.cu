@@ -1,5 +1,6 @@
 #include "CudaSolver.cuh"
 #include <cstdlib>
+#include <cuda.h>
 
 #define SAFE_CALL(CallInstruction) { \
     cudaError_t cuerr = CallInstruction; \
