@@ -1,4 +1,5 @@
 #include "CudaSolver.cuh"
+#include "utils.h"
 #include <cstdlib>
 #include <cuda.h>
 
@@ -62,6 +63,7 @@ void makeStepWithCuda(Grid3D &grid, Grid3D &previous_1, Grid3D &previous_2,
             1,
             grid.shape[2] - 2
     );
+    LOG << "blockSize: " << blockSize.x << " " << blockSize.y << " " << blockSize.z << endl;
     dim3 gridInBlocks = dim3(
             (grid.shape[0] - 2) / blockSize.x,
             (grid.shape[1] - 2) / blockSize.y,
