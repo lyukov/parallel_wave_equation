@@ -88,7 +88,7 @@ void makeStepWithCuda(Grid3D &grid, Grid3D &previous_1, Grid3D &previous_2,
 
     SAFE_CALL(cudaMemcpy(grid.getFlatten().data(), d_grid, sizeInBytes, cudaMemcpyDeviceToHost));
 
-    SAFE_CALL(cudaFree(d_grid));
-    SAFE_CALL(cudaFree(d_previous_1));
-    SAFE_CALL(cudaFree(d_previous_2));
+//    SAFE_CALL(cudaFree(d_grid));
+//    SAFE_CALL(cudaFree(d_previous_1));
+//    SAFE_CALL(cudaFree(d_previous_2));
 }
