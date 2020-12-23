@@ -86,7 +86,7 @@ void makeStepWithCuda(Grid3D &grid, Grid3D &previous_1, Grid3D &previous_2,
     cudaMemcpyToSymbol(d_h_z, &h_z, sizeof(double));
     cudaMemcpyToSymbol(d_sqr_tau, &sqr_tau, sizeof(double));
 
-    step<<<gridInBlocks, blockSize>>>(d_grid, d_previous_1, d_previous_2);
+    SAFE_KERNEL_CALL((step<<<gridInBlocks, blockSize>>>(d_grid, d_previous_1, d_previous_2)));
 
     SAFE_CALL(cudaMemcpy(grid.getFlatten().data(), d_grid, sizeInBytes, cudaMemcpyDeviceToHost));
 
