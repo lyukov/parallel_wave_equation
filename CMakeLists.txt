@@ -3,7 +3,7 @@ project(Task2)
 
 set(CMAKE_CXX_STANDARD 98)
 
-include_directories(..)
+include_directories(.)
 
 add_executable(Task2
         src/functions.h
