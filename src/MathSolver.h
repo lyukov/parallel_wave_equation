@@ -9,17 +9,25 @@ public:
 
     virtual ~MathSolver() {}
 
-    virtual void init_0(Grid3D &grid, int start_i, int start_j, int start_k) = 0;
+    virtual void init_0(int start_i, int start_j, int start_k) = 0;
 
-    virtual void init_1(Grid3D &grid, Grid3D &previous) = 0;
+    virtual void init_1() = 0;
 
-    virtual void makeStepForInnerNodes(Grid3D &grid, Grid3D &previous_1, Grid3D &previous_2) = 0;
+    virtual void makeStepForInnerNodes(int n) = 0;
 
-    virtual void fillByGroundTruth(Grid3D &grid, int n, int start_i, int start_j, int start_k) = 0;
+    virtual void updateGroundTruth(int n, int start_i, int start_j, int start_k) = 0;
 
-    virtual double maxAbsoluteErrorInner(Grid3D &grid, Grid3D &another) = 0;
+    virtual double maxAbsoluteErrorInner(int n) = 0;
 
-    virtual double sumSquaredErrorInner(Grid3D &grid, Grid3D &another) = 0;
+    virtual double sumSquaredErrorInner(int n) = 0;
+
+    virtual std::vector<double> getSlice(int n, int index, int axis) = 0;
+
+    virtual int getSliceSize(int axis) = 0;
+
+    virtual void setSlice(int n, int index, int axis, std::vector<double> &slice) = 0;
+
+    virtual void setZeros(int n, int index, int axis) = 0;
 
 protected:
     const U u;

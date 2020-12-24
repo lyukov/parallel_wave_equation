@@ -53,7 +53,10 @@ int main(int argc, char **argv) {
 
     Grid3D groundTruth(block.shape[0], block.shape[1], block.shape[2]);
 
-    MathSolver *solver = new CudaSolver(T, L_x, L_y, L_z, N, K, u, phi, groundTruth);
+    MathSolver *solver = new CudaSolver(
+            T, L_x, L_y, L_z, N, K, u, phi,
+            block.shape[0], block.shape[1], block.shape[2]
+    );
     if (mpi.isMainProcess()) {
         csvOut << label << TAB << nProcessors
                << TAB << L << TAB << T << TAB << N << TAB << K
@@ -66,8 +69,7 @@ int main(int argc, char **argv) {
     double error;
     for (int iter = 0; iter <= K; ++iter) {
         block.makeStep();
-        solver->fillByGroundTruth(
-                groundTruth,
+        solver->updateGroundTruth(
                 iter,
                 block.start[0] - 1,
                 block.start[1] - 1,
@@ -76,14 +78,14 @@ int main(int argc, char **argv) {
         error = block.printError(groundTruth);
     }
 
-    /* Save result as binary file */
-    if (label == "dump") {
-        std::stringstream ss;
-        ss << "block_" << mpi.getRank();
-        block.getCurrentState().writeToFile(ss.str());
-        ss << "_gt";
-        groundTruth.writeToFile(ss.str());
-    }
+//    /* Save result as binary file */
+//    if (label == "dump") {
+//        std::stringstream ss;
+//        ss << "block_" << mpi.getRank();
+//        block.getCurrentState().writeToFile(ss.str());
+//        ss << "_gt";
+//        groundTruth.writeToFile(ss.str());
+//    }
 
     mpi.barrier();
     double duration = mpi.time() - startTime;

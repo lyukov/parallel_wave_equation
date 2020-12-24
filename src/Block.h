@@ -5,8 +5,6 @@
 #include "Grid3D.h"
 #include "CpuSolver.h"
 
-const int N_GRIDS = 3;
-
 class Block {
 public:
     int shape[3];
@@ -17,8 +15,6 @@ public:
     Block(MPIProxy *mpi, int splits_X, int splits_Y, int splits_Z, int N);
 
     void makeStep();
-
-    Grid3D &getCurrentState();
 
     double printError(Grid3D &groundTruth);
 
@@ -34,7 +30,6 @@ private:
 
     /* Mutable state */
     int iteration;
-    std::vector<Grid3D> grids;
 
     void syncWithNeighbors();
 

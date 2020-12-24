@@ -31,34 +31,15 @@ Block::Block(
     start[0] = block_coords[0] * (N / n_splits[0]);
     start[1] = block_coords[1] * (N / n_splits[1]);
     start[2] = block_coords[2] * (N / n_splits[2]);
-
-    for (int i = 0; i < N_GRIDS; ++i) {
-        grids.push_back(
-                Grid3D(shape[0], shape[1], shape[2])
-        );
-    }
-}
-
-Grid3D &Block::getCurrentState() {
-    return grids[(iteration + N_GRIDS - 1) % N_GRIDS];
 }
 
 void Block::makeStep() {
     if (iteration == 0) {
-        solver->init_0(
-                grids[iteration % N_GRIDS],
-                start[0] - 1, start[1] - 1, start[2] - 1
-        );
+        solver->init_0(start[0] - 1, start[1] - 1, start[2] - 1);
     } else if (iteration == 1) {
-        solver->init_1(
-                grids[iteration % N_GRIDS], grids[(iteration - 1) % N_GRIDS]
-        );
+        solver->init_1();
     } else {
-        solver->makeStepForInnerNodes(
-                grids[iteration % N_GRIDS],
-                grids[(iteration - 1) % N_GRIDS],
-                grids[(iteration - 2) % N_GRIDS]
-        );
+        solver->makeStepForInnerNodes(iteration);
     }
     syncWithNeighbors();
     iteration++;
@@ -79,23 +60,22 @@ void Block::sendToNeighbor(int axis, int direction, std::vector<double> &buf) {
     int neighborId = getNeighborId(axis, direction);
     if (neighborId != -1) {
         int index = direction == -1 ? 1 : shape[axis] - 2;
-        buf = grids[iteration % N_GRIDS].getSlice(index, axis);
+        buf = solver->getSlice(iteration, index, axis);
         mpi->sendVector(buf, neighborId);
     }
 }
 
 void Block::receiveFromNeighbor(int axis, int direction) {
-    Grid3D &grid = grids[iteration % N_GRIDS];
     int neighborId = getNeighborId(axis, direction);
     if (neighborId != -1) {
-        int sliceSize = grid.getSliceSize(axis);
+        int sliceSize = solver->getSliceSize(axis);
         std::vector<double> slice = mpi->receiveVector(sliceSize, neighborId);
         int index = direction == -1 ? 0 : shape[axis] - 1;
-        grid.setSlice(index, axis, slice);
+        solver->setSlice(iteration, index, axis, slice);
     } else {
         // Zero border conditions
         int index = direction == -1 ? 1 : shape[axis] - 1;
-        grid.setZeros(index, axis);
+        solver->setZeros(iteration, index, axis);
     }
 }
 
@@ -116,11 +96,11 @@ int Block::getNeighborId(int axis, int direction) const {
 double Block::printError(Grid3D &groundTruth) {
     //if (iteration % 10) return;
     double absoluteError = mpi->maxOverAll(
-            solver->maxAbsoluteErrorInner(getCurrentState(), groundTruth)
+            solver->maxAbsoluteErrorInner(iteration - 1)
     );
     mpi->barrier();
     double sumSquaredError = mpi->sumOverAll(
-            solver->sumSquaredErrorInner(getCurrentState(), groundTruth)
+            solver->sumSquaredErrorInner(iteration - 1)
     );
     double mse = sumSquaredError / (N * N * N);
     mpi->barrier();

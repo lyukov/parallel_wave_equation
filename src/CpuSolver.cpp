@@ -2,10 +2,19 @@
 #include "utils.h"
 #include <omp.h>
 
-CpuSolver::CpuSolver(double T, double L_x, double L_y, double L_z, int N, int K, U u, Phi phi)
-        : MathSolver(T, L_x, L_y, L_z, N, K, u, phi) {}
+CpuSolver::CpuSolver(double T, double L_x, double L_y, double L_z, int N, int K, U u, Phi phi,
+                     int shapeX, int shapeY, int shapeZ)
+        : MathSolver(T, L_x, L_y, L_z, N, K, u, phi),
+          groundTruth(shapeX, shapeY, shapeZ) {
+    for (int i = 0; i < N_GRIDS; ++i) {
+        grids.push_back(
+                Grid3D(shapeX, shapeY, shapeZ)
+        );
+    }
+}
 
-void CpuSolver::init_0(Grid3D &grid, int start_i, int start_j, int start_k) {
+void CpuSolver::init_0(int start_i, int start_j, int start_k) {
+    Grid3D &grid = grids[0];
 #pragma omp parallel for
     for (int i = 0; i < grid.shape[0]; ++i) {
         for (int j = 0; j < grid.shape[1]; ++j) {
@@ -20,7 +29,9 @@ void CpuSolver::init_0(Grid3D &grid, int start_i, int start_j, int start_k) {
     }
 }
 
-void CpuSolver::init_1(Grid3D &grid, Grid3D &previous) {
+void CpuSolver::init_1() {
+    Grid3D &grid = grids[1];
+    Grid3D &previous = grids[0];
 #pragma omp parallel for
     for (int i = 1; i < grid.shape[0] - 1; ++i) {
         for (int j = 1; j < grid.shape[1] - 1; ++j) {
@@ -40,7 +51,10 @@ double CpuSolver::laplacian(const Grid3D &g, int i, int j, int k) const {
 }
 
 /** Fills n-th layer of grid. It depends on two previous layers. */
-void CpuSolver::makeStepForInnerNodes(Grid3D &grid, Grid3D &previous_1, Grid3D &previous_2) {
+void CpuSolver::makeStepForInnerNodes(int n) {
+    Grid3D &grid = grids[n % N_GRIDS];
+    Grid3D &previous_1 = grids[(n - 1) % N_GRIDS];
+    Grid3D &previous_2 = grids[(n - 2) % N_GRIDS];
 #pragma omp parallel for
     for (int i = 1; i < grid.shape[0] - 1; ++i) {
         for (int j = 1; j < grid.shape[1] - 1; ++j) {
@@ -55,12 +69,12 @@ void CpuSolver::makeStepForInnerNodes(Grid3D &grid, Grid3D &previous_1, Grid3D &
     }
 }
 
-void CpuSolver::fillByGroundTruth(Grid3D &grid, int n, int start_i, int start_j, int start_k) {
+void CpuSolver::updateGroundTruth(int n, int start_i, int start_j, int start_k) {
 #pragma omp parallel for
-    for (int i = 0; i < grid.shape[0]; ++i) {
-        for (int j = 0; j < grid.shape[1]; ++j) {
-            for (int k = 0; k < grid.shape[2]; ++k) {
-                grid(i, j, k) = u(
+    for (int i = 0; i < groundTruth.shape[0]; ++i) {
+        for (int j = 0; j < groundTruth.shape[1]; ++j) {
+            for (int k = 0; k < groundTruth.shape[2]; ++k) {
+                groundTruth(i, j, k) = u(
                         tau * n,
                         h_x * (start_i + i),
                         h_y * (start_j + j),
@@ -71,13 +85,14 @@ void CpuSolver::fillByGroundTruth(Grid3D &grid, int n, int start_i, int start_j,
     }
 }
 
-double CpuSolver::maxAbsoluteErrorInner(Grid3D &grid, Grid3D &another) {
+double CpuSolver::maxAbsoluteErrorInner(int n) {
+    Grid3D &grid = grids[n % N_GRIDS];
     double c_norm = 0;
     for (int i = 1; i < grid.shape[0] - 1; ++i) {
         for (int j = 1; j < grid.shape[1] - 1; ++j) {
             for (int k = 1; k < grid.shape[2] - 1; ++k) {
                 c_norm = max(
-                        std::abs(grid(i, j, k) - another(i, j, k)),
+                        std::abs(grid(i, j, k) - groundTruth(i, j, k)),
                         c_norm
                 );
             }
@@ -86,14 +101,35 @@ double CpuSolver::maxAbsoluteErrorInner(Grid3D &grid, Grid3D &another) {
     return c_norm;
 }
 
-double CpuSolver::sumSquaredErrorInner(Grid3D &grid, Grid3D &another) {
+double CpuSolver::sumSquaredErrorInner(int n) {
+    Grid3D &grid = grids[n % N_GRIDS];
     double sum = 0;
     for (int i = 1; i < grid.shape[0] - 1; ++i) {
         for (int j = 1; j < grid.shape[1] - 1; ++j) {
             for (int k = 1; k < grid.shape[2] - 1; ++k) {
-                sum += sqr(grid(i, j, k) - another(i, j, k));
+                sum += sqr(grid(i, j, k) - groundTruth(i, j, k));
             }
         }
     }
     return sum;
+}
+
+Grid3D &CpuSolver::getCurrentState(int n) {
+    return grids[n % N_GRIDS];
+}
+
+std::vector<double> CpuSolver::getSlice(int n, int index, int axis) {
+    return getCurrentState(n).getSlice(index, axis);
+}
+
+int CpuSolver::getSliceSize(int axis) {
+    return groundTruth.getSliceSize(axis);
+}
+
+void CpuSolver::setSlice(int n, int index, int axis, std::vector<double> &slice) {
+    getCurrentState(n).setSlice(index, axis, slice);
+}
+
+void CpuSolver::setZeros(int n, int index, int axis) {
+    getCurrentState(n).setZeros(index, axis);
 }
