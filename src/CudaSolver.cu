@@ -130,7 +130,7 @@ void cuda_step(double *grid, double *previous_1, double *previous_2) {
     idx %= (d_shapeYZ_inner);
     int j = idx / d_shapeZ_inner + 1;
     int k = idx % d_shapeZ_inner + 1;
-    int index = flat_index(i, j, k);
+    int index = i * d_cfI + j * d_cfJ + k;
 
     grid[index] = 2.0 * previous_1[index] - previous_2[index] +
                   d_tau * d_tau * laplacian(previous_1, index);
@@ -153,7 +153,7 @@ void cuda_fillByGt(double *grid, int n) {
     idx %= (d_shapeYZ);
     int j = idx / d_shapeZ;
     int k = idx % d_shapeZ;
-    int index = flat_index(i, j, k);
+    int index = i * d_cfI + j * d_cfJ + k;
     grid[index] = cuda_u(
             d_tau * n,
             d_h_x * (d_start_i + i),
@@ -169,7 +169,7 @@ void cuda_init0(double *grid) {
     idx %= (d_shapeYZ_inner);
     int j = idx / d_shapeZ_inner + 1;
     int k = idx % d_shapeZ_inner + 1;
-    int index = flat_index(i, j, k);
+    int index = i * d_cfI + j * d_cfJ + k;
     grid[index] = cuda_phi(
             d_h_x * (d_start_i + i),
             d_h_y * (d_start_j + j),
