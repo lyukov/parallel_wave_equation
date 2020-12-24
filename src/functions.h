@@ -14,11 +14,12 @@ public:
 };
 
 class U {
+public:
     const double L_x;
     const double L_y;
     const double L_z;
     const double a_t;
-public:
+
     inline U(double L_x, double L_y, double L_z
     ) : L_x(L_x), L_y(L_y), L_z(L_z),
         a_t(M_PI * sqrt(4.0 / sqr(L_x) + 1.0 / sqr(L_y) + 4.0 / sqr(L_z))) {}
@@ -29,10 +30,11 @@ public:
 };
 
 class Phi {
+public:
     double L_x;
     double L_y;
     double L_z;
-public:
+
     inline Phi(double L_x, double L_y, double L_z) : L_x(L_x), L_y(L_y), L_z(L_z) {}
 
     inline double operator()(double x, double y, double z) const {

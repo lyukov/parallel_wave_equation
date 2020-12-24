@@ -70,19 +70,20 @@ void MathSolver::makeStepForInnerNodes(Grid3D &grid, const Grid3D &previous_1, c
 }
 
 void MathSolver::fillByGroundTruth(Grid3D &grid, int n, int start_i, int start_j, int start_k) const {
-#pragma omp parallel for
-    for (int i = 0; i < grid.shape[0]; ++i) {
-        for (int j = 0; j < grid.shape[1]; ++j) {
-            for (int k = 0; k < grid.shape[2]; ++k) {
-                grid(i, j, k) = u(
-                        tau * n,
-                        h_x * (start_i + i),
-                        h_y * (start_j + j),
-                        h_z * (start_k + k)
-                );
-            }
-        }
-    }
+    fillByGtWithCuda(grid, u, n, tau, start_i, start_j, start_k);
+//#pragma omp parallel for
+//    for (int i = 0; i < grid.shape[0]; ++i) {
+//        for (int j = 0; j < grid.shape[1]; ++j) {
+//            for (int k = 0; k < grid.shape[2]; ++k) {
+//                grid(i, j, k) = u(
+//                        tau * n,
+//                        h_x * (start_i + i),
+//                        h_y * (start_j + j),
+//                        h_z * (start_k + k)
+//                );
+//            }
+//        }
+//    }
 }
 
 double MathSolver::maxAbsoluteErrorInner(const Grid3D &grid, const Grid3D &another) const {
