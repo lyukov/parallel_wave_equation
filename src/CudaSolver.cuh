@@ -19,6 +19,9 @@ public:
     double maxAbsoluteErrorInner(Grid3D &grid, Grid3D &another);
 
 private:
-
-    unsigned long sizeInBytes;
+    const unsigned long sizeInBytes;
+    const int blockSizeFull;
+    const int blockSizeInner;
+    const int gridSizeFull;
+    const int gridSizeInner;
 };

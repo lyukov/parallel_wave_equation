@@ -53,24 +53,24 @@ cudaError_t *cudaConfigureCall(dim3 gridDim, dim3 blockDim, size_t sharedMem = 0
 
 #endif
 
-#define SAFE_CALL(CallInstruction) { \
-    cudaError_t cuerr = CallInstruction; \
+#define SAFE_CALL(Call) { \
+    cudaError_t cuerr = Call; \
     if(cuerr != cudaSuccess) { \
-        printf("CUDA error: %s at call \"" #CallInstruction "\"\n", cudaGetErrorString(cuerr)); \
+        printf("CUDA error: %s at call \"" #Call "\"\n", cudaGetErrorString(cuerr)); \
             throw "error in CUDA API function, aborting..."; \
     } \
 }
 
-#define SAFE_KERNEL_CALL(KernelCallInstruction) { \
-    KernelCallInstruction; \
+#define SAFE_KERNEL_CALL(KernelCall) { \
+    KernelCall; \
     cudaError_t cuerr = cudaGetLastError(); \
     if(cuerr != cudaSuccess) { \
-        printf("CUDA error in kernel launch: %s at kernel \"" #KernelCallInstruction "\"\n", cudaGetErrorString(cuerr)); \
+        printf("CUDA error in kernel launch: %s at kernel \"" #KernelCall "\"\n", cudaGetErrorString(cuerr)); \
             throw "error in CUDA kernel launch, aborting..."; \
     } \
     cuerr = cudaDeviceSynchronize(); \
     if(cuerr != cudaSuccess) { \
-        printf("CUDA error in kernel execution: %s at kernel \"" #KernelCallInstruction "\"\n", cudaGetErrorString(cuerr)); \
+        printf("CUDA error in kernel execution: %s at kernel \"" #KernelCall "\"\n", cudaGetErrorString(cuerr)); \
             throw "error in CUDA kernel execution, aborting..."; \
     } \
 }
@@ -171,9 +171,24 @@ void cuda_init0(double *grid) {
     );
 }
 
+__global__
+void cuda_init1(double *grid, double *previous) {
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    int i, j, k;
+    coords_inner(idx, i, j, k);
+    int index = flat_index(i, j, k);
+    grid[index] = previous[index] + 0.5 * sqr(d_tau) * laplacian(previous, index);
+}
+
 CudaSolver::CudaSolver(
         double T, double L_x, double L_y, double L_z, int N, int K, U u, Phi phi, Grid3D &grid
-) : CpuSolver(T, L_x, L_y, L_z, N, K, u, phi), sizeInBytes(sizeof(double) * grid.size) {
+) : CpuSolver(T, L_x, L_y, L_z, N, K, u, phi),
+    sizeInBytes(sizeof(double) * grid.size),
+    gridSizeFull(grid.shape[0] * grid.shape[1]),
+    blockSizeFull(grid.shape[2]),
+    gridSizeInner((grid.shape[0] - 2) * (grid.shape[1] - 2)),
+    blockSizeInner(grid.shape[2] - 2) {
+
     cudaMemcpyToSymbol(d_h_x, &h_x, sizeof(double));
     cudaMemcpyToSymbol(d_h_y, &h_y, sizeof(double));
     cudaMemcpyToSymbol(d_h_z, &h_z, sizeof(double));
@@ -196,25 +211,29 @@ CudaSolver::CudaSolver(
 }
 
 void CudaSolver::init_0(Grid3D &grid, int start_i, int start_j, int start_k) {
-    int blockSize = grid.shape[2] - 2;
-    int gridInBlocks = (grid.shape[0] - 2) * (grid.shape[1] - 2);
     double *d_gt_grid;
     SAFE_CALL(cudaMalloc((void **) &d_gt_grid, sizeInBytes));
     cudaMemcpyToSymbol(d_start_i, &start_i, sizeof(int));
     cudaMemcpyToSymbol(d_start_j, &start_j, sizeof(int));
     cudaMemcpyToSymbol(d_start_k, &start_k, sizeof(int));
-    SAFE_KERNEL_CALL((cuda_init0<<<gridInBlocks, blockSize>>>(d_gt_grid)));
+    SAFE_KERNEL_CALL((cuda_init0<<<gridSizeInner, blockSizeInner>>>(d_gt_grid)));
     SAFE_CALL(cudaMemcpy(grid.getFlatten().data(), d_gt_grid, sizeInBytes, cudaMemcpyDeviceToHost));
     SAFE_CALL(cudaFree(d_gt_grid));
 }
 
 void CudaSolver::init_1(Grid3D &grid, Grid3D &previous) {
-    CpuSolver::init_1(grid, previous);
+//    CpuSolver::init_1(grid, previous);
+    double *d_gt_grid;
+    double *d_previous;
+    SAFE_CALL(cudaMalloc((void **) &d_gt_grid, sizeInBytes));
+    SAFE_CALL(cudaMalloc((void **) &d_previous, sizeInBytes));
+    SAFE_CALL(cudaMemcpy(d_previous, previous.getFlatten().data(), sizeInBytes, cudaMemcpyHostToDevice));
+    SAFE_KERNEL_CALL((cuda_init1<<<gridSizeInner, blockSizeInner>>>(d_gt_grid, d_previous)));
+    SAFE_CALL(cudaMemcpy(grid.getFlatten().data(), d_gt_grid, sizeInBytes, cudaMemcpyDeviceToHost));
+    SAFE_CALL(cudaFree(d_gt_grid));
 }
 
 void CudaSolver::makeStepForInnerNodes(Grid3D &grid, Grid3D &previous_1, Grid3D &previous_2) {
-    int blockSize = grid.shape[2] - 2;
-    int gridInBlocks = (grid.shape[0] - 2) * (grid.shape[1] - 2);
     double *d_grid;
     double *d_previous_1;
     double *d_previous_2;
@@ -223,7 +242,7 @@ void CudaSolver::makeStepForInnerNodes(Grid3D &grid, Grid3D &previous_1, Grid3D 
     SAFE_CALL(cudaMalloc((void **) &d_previous_2, sizeInBytes));
     SAFE_CALL(cudaMemcpy(d_previous_1, previous_1.getFlatten().data(), sizeInBytes, cudaMemcpyHostToDevice));
     SAFE_CALL(cudaMemcpy(d_previous_2, previous_2.getFlatten().data(), sizeInBytes, cudaMemcpyHostToDevice));
-    SAFE_KERNEL_CALL((cuda_step<<<gridInBlocks, blockSize>>>(d_grid, d_previous_1, d_previous_2)));
+    SAFE_KERNEL_CALL((cuda_step<<<gridSizeInner, blockSizeInner>>>(d_grid, d_previous_1, d_previous_2)));
     SAFE_CALL(cudaMemcpy(grid.getFlatten().data(), d_grid, sizeInBytes, cudaMemcpyDeviceToHost));
     SAFE_CALL(cudaFree(d_grid));
     SAFE_CALL(cudaFree(d_previous_1));
@@ -231,14 +250,12 @@ void CudaSolver::makeStepForInnerNodes(Grid3D &grid, Grid3D &previous_1, Grid3D 
 }
 
 void CudaSolver::fillByGroundTruth(Grid3D &grid, int n, int start_i, int start_j, int start_k) {
-    int blockSize = grid.shape[2];
-    int gridInBlocks = grid.shape[0] * grid.shape[1];
     double *d_gt_grid;
     SAFE_CALL(cudaMalloc((void **) &d_gt_grid, sizeInBytes));
     cudaMemcpyToSymbol(d_start_i, &start_i, sizeof(int));
     cudaMemcpyToSymbol(d_start_j, &start_j, sizeof(int));
     cudaMemcpyToSymbol(d_start_k, &start_k, sizeof(int));
-    SAFE_KERNEL_CALL((cuda_fillByGt<<<gridInBlocks, blockSize>>>(d_gt_grid, n)));
+    SAFE_KERNEL_CALL((cuda_fillByGt<<<gridSizeFull, blockSizeFull>>>(d_gt_grid, n)));
     SAFE_CALL(cudaMemcpy(grid.getFlatten().data(), d_gt_grid, sizeInBytes, cudaMemcpyDeviceToHost));
     SAFE_CALL(cudaFree(d_gt_grid));
 }
