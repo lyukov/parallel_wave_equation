@@ -296,5 +296,5 @@ void CudaSolver::setZeros(int n, int index, int axis) {
 }
 
 double *CudaSolver::getCurrentState(int n) {
-    return d_grids[n % N_GRIDS]
+    return d_grids[n % N_GRIDS];
 }
