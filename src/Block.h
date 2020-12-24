@@ -14,13 +14,15 @@ public:
 
     static int calcBlockSize(int N, int I, int splits);
 
-    Block(MPIProxy *mpi, MathSolver *solver, int splits_X, int splits_Y, int splits_Z, int N);
+    Block(MPIProxy *mpi, int splits_X, int splits_Y, int splits_Z, int N);
 
     void makeStep();
 
     Grid3D &getCurrentState();
 
     double printError(Grid3D &groundTruth);
+
+    void setSolver(MathSolver* solver);
 
 private:
     int N;

@@ -11,10 +11,9 @@ int Block::calcBlockSize(int N, int I, int splits) {
 
 Block::Block(
         MPIProxy *mpi,
-        MathSolver *solver,
         int splits_X, int splits_Y, int splits_Z,
         int N
-) : solver(solver), mpi(mpi), N(N) {
+) : solver(0), mpi(mpi), N(N) {
     int blockId = mpi->getRank();
     iteration = 0;
     isPeriodicalCondition[0] = true;
@@ -135,4 +134,8 @@ double Block::printError(Grid3D &groundTruth) {
             << " \tMax GT: " << maxGt << endl;
     }
     return absoluteError;
+}
+
+void Block::setSolver(MathSolver *solver) {
+    this->solver = solver;
 }

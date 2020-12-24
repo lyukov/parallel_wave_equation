@@ -49,7 +49,11 @@ int main(int argc, char **argv) {
     Phi phi(L_x, L_y, L_z);
     U u(L_x, L_y, L_z);
 
-    MathSolver *solver = new CudaSolver(T, L_x, L_y, L_z, N, K, u, phi);
+    Block block(&mpi, splits_X, splits_Y, splits_Z, N);
+
+    Grid3D groundTruth(block.shape[0], block.shape[1], block.shape[2]);
+
+    MathSolver *solver = new CudaSolver(T, L_x, L_y, L_z, N, K, u, phi, groundTruth);
     if (mpi.isMainProcess()) {
         csvOut << label << TAB << nProcessors
                << TAB << L << TAB << T << TAB << N << TAB << K
@@ -57,9 +61,7 @@ int main(int argc, char **argv) {
         LOG << "Num of processors: " << nProcessors << endl;
         LOG << solver << endl;
     }
-    Block block(&mpi, solver, splits_X, splits_Y, splits_Z, N);
-
-    Grid3D groundTruth(block.shape[0], block.shape[1], block.shape[2]);
+    block.setSolver(solver);
 
     double error;
     for (int iter = 0; iter <= K; ++iter) {
