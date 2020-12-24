@@ -196,22 +196,22 @@ CudaSolver::CudaSolver(
 }
 
 void CudaSolver::init_0(Grid3D &grid, int start_i, int start_j, int start_k) {
-    MathSolver::init_0(grid, start_i, start_j, start_k); return;
-    int blockSize = grid.shape[2] - 2;
-    int gridInBlocks = grid.shape[0] * grid.shape[1] - 2;
-
-    double *d_gt_grid;
-    SAFE_CALL(cudaMalloc((void **) &d_gt_grid, sizeInBytes));
-
-    cudaMemcpyToSymbol(d_start_i, &start_i, sizeof(int));
-    cudaMemcpyToSymbol(d_start_j, &start_j, sizeof(int));
-    cudaMemcpyToSymbol(d_start_k, &start_k, sizeof(int));
-
-    SAFE_KERNEL_CALL((cuda_init0<<<gridInBlocks, blockSize>>>(d_gt_grid)));
-
-    SAFE_CALL(cudaMemcpy(grid.getFlatten().data(), d_gt_grid, sizeInBytes, cudaMemcpyDeviceToHost));
-
-    SAFE_CALL(cudaFree(d_gt_grid));
+    CpuSolver::init_0(grid, start_i, start_j, start_k); return;
+//    int blockSize = grid.shape[2] - 2;
+//    int gridInBlocks = grid.shape[0] * grid.shape[1] - 2;
+//
+//    double *d_gt_grid;
+//    SAFE_CALL(cudaMalloc((void **) &d_gt_grid, sizeInBytes));
+//
+//    cudaMemcpyToSymbol(d_start_i, &start_i, sizeof(int));
+//    cudaMemcpyToSymbol(d_start_j, &start_j, sizeof(int));
+//    cudaMemcpyToSymbol(d_start_k, &start_k, sizeof(int));
+//
+//    SAFE_KERNEL_CALL((cuda_init0<<<gridInBlocks, blockSize>>>(d_gt_grid)));
+//
+//    SAFE_CALL(cudaMemcpy(grid.getFlatten().data(), d_gt_grid, sizeInBytes, cudaMemcpyDeviceToHost));
+//
+//    SAFE_CALL(cudaFree(d_gt_grid));
 }
 
 void CudaSolver::makeStepForInnerNodes(Grid3D &grid, Grid3D &previous_1, Grid3D &previous_2) {
