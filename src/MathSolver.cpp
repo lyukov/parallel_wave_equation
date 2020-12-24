@@ -47,7 +47,7 @@ double MathSolver::laplacian(const Grid3D &g, int i, int j, int k) const {
 }
 
 /** Fills n-th layer of grid. It depends on two previous layers. */
-void MathSolver::makeStepForInnerNodes(Grid3D &grid, const Grid3D &previous_1, const Grid3D &previous_2) {
+void MathSolver::makeStepForInnerNodes(Grid3D &grid, Grid3D &previous_1, Grid3D &previous_2) {
 #pragma omp parallel for
     for (int i = 1; i < grid.shape[0] - 1; ++i) {
         for (int j = 1; j < grid.shape[1] - 1; ++j) {

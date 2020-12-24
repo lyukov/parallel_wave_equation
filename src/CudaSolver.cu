@@ -89,7 +89,7 @@ void cuda_fillByGt(double *grid, int n) {
     );
 }
 
-void CudaSolver::makeStepForInnerNodes(Grid3D &grid, const Grid3D &previous_1, const Grid3D &previous_2) {
+void CudaSolver::makeStepForInnerNodes(Grid3D &grid, Grid3D &previous_1, Grid3D &previous_2) {
     int blockSize = grid.shape[2] - 2;
     int gridInBlocks = (grid.shape[0] - 2) * (grid.shape[1] - 2);
 

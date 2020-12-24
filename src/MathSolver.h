@@ -13,7 +13,7 @@ public:
 
     virtual void init_1(Grid3D &grid, Grid3D &previous);
 
-    virtual void makeStepForInnerNodes(Grid3D &grid, const Grid3D &previous_1, const Grid3D &previous_2);
+    virtual void makeStepForInnerNodes(Grid3D &grid, Grid3D &previous_1, Grid3D &previous_2);
 
     virtual void fillByGroundTruth(Grid3D &grid, int n, int start_i, int start_j, int start_k);
 
