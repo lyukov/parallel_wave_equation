@@ -1,6 +1,5 @@
 #include "CudaSolver.cuh"
 #include "utils.h"
-#include "functions.h"
 #include <cstdlib>
 #include <cuda.h>
 #include <cmath>
