@@ -194,7 +194,7 @@ CudaSolver::CudaSolver(
     int shapeZ = grid.shape[2];
     int shapeYZ = grid.shape[1] * shapeZ;
     int shapeZ_inner = grid.shape[2] - 2;
-    int shapeYZ_inner = (grid.shape[1] - 2) * shapeZ;
+    int shapeYZ_inner = (grid.shape[1] - 2) * shapeZ_inner;
     cudaMemcpyToSymbol(d_shapeYZ, &shapeYZ, sizeof(int));
     cudaMemcpyToSymbol(d_shapeZ, &shapeZ, sizeof(int));
     cudaMemcpyToSymbol(d_shapeYZ_inner, &shapeYZ_inner, sizeof(int));
