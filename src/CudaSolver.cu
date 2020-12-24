@@ -280,18 +280,29 @@ void CudaSolver::fillByGroundTruth(Grid3D &grid, int n, int start_i, int start_j
 }
 
 double CudaSolver::maxAbsoluteErrorInner(Grid3D &grid, Grid3D &another) {
-    //return CpuSolver::maxAbsoluteErrorInner(grid, another);
     double *d_grid, *d_another, *d_error;
     SAFE_CALL(cudaMalloc((void **) &d_grid, sizeInBytes));
     SAFE_CALL(cudaMalloc((void **) &d_another, sizeInBytes));
     SAFE_CALL(cudaMalloc((void **) &d_error, sizeInBytes));
     SAFE_CALL(cudaMemcpy(d_grid, grid.getFlatten().data(), sizeInBytes, cudaMemcpyHostToDevice));
     SAFE_CALL(cudaMemcpy(d_another, another.getFlatten().data(), sizeInBytes, cudaMemcpyHostToDevice));
-    LOG << "Transform started" << endl;
     SAFE_KERNEL_CALL((cuda_c1<<<gridSizeInner, blockSizeInner>>>(d_grid, d_another, d_error)));
-    LOG << "Transform finished" << endl;
     double error = thrust::reduce(thrust::device, d_error, d_error + flatSize, 0.0, thrust::maximum<double>());
-    LOG << "Reduce finished" << endl;
+    SAFE_CALL(cudaFree(d_grid));
+    SAFE_CALL(cudaFree(d_another));
+    SAFE_CALL(cudaFree(d_error));
+    return error;
+}
+
+double CudaSolver::sumSquaredErrorInner(Grid3D &grid, Grid3D &another) {
+    double *d_grid, *d_another, *d_error;
+    SAFE_CALL(cudaMalloc((void **) &d_grid, sizeInBytes));
+    SAFE_CALL(cudaMalloc((void **) &d_another, sizeInBytes));
+    SAFE_CALL(cudaMalloc((void **) &d_error, sizeInBytes));
+    SAFE_CALL(cudaMemcpy(d_grid, grid.getFlatten().data(), sizeInBytes, cudaMemcpyHostToDevice));
+    SAFE_CALL(cudaMemcpy(d_another, another.getFlatten().data(), sizeInBytes, cudaMemcpyHostToDevice));
+    SAFE_KERNEL_CALL((cuda_squared_error<<<gridSizeInner, blockSizeInner>>>(d_grid, d_another, d_error)));
+    double error = thrust::reduce(thrust::device, d_error, d_error + flatSize, 0.0, thrust::sum<double>());
     SAFE_CALL(cudaFree(d_grid));
     SAFE_CALL(cudaFree(d_another));
     SAFE_CALL(cudaFree(d_error));

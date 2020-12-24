@@ -18,6 +18,8 @@ public:
 
     double maxAbsoluteErrorInner(Grid3D &grid, Grid3D &another);
 
+    double sumSquaredErrorInner(Grid3D &grid, Grid3D &another);
+
 private:
     const unsigned long sizeInBytes;
     const unsigned long flatSize;
