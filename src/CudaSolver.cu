@@ -196,6 +196,7 @@ CudaSolver::CudaSolver(
 }
 
 void CudaSolver::init_0(Grid3D &grid, int start_i, int start_j, int start_k) {
+    MathSolver::init_0(grid, start_i, start_j, start_k); return;
     int blockSize = grid.shape[2] - 2;
     int gridInBlocks = grid.shape[0] * grid.shape[1] - 2;
 
