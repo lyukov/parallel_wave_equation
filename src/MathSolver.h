@@ -9,22 +9,21 @@ class MathSolver {
 public:
     MathSolver(double T, double L_x, double L_y, double L_z, int N, int K, U u, Phi phi);
 
-    void init_0(Grid3D &grid, int start_i, int start_j, int start_k) const;
+    virtual void init_0(Grid3D &grid, int start_i, int start_j, int start_k);
 
-    void init_1(Grid3D &grid, Grid3D &previous) const;
+    virtual void init_1(Grid3D &grid, Grid3D &previous);
 
-    /** Fills n-th grid of grid. It depends on two previous layers. */
-    void makeStepForInnerNodes(Grid3D &grid, const Grid3D &previous_1, const Grid3D &previous_2) const;
+    virtual void makeStepForInnerNodes(Grid3D &grid, const Grid3D &previous_1, const Grid3D &previous_2);
 
-    void fillByGroundTruth(Grid3D &grid, int n, int start_i, int start_j, int start_k) const;
+    virtual void fillByGroundTruth(Grid3D &grid, int n, int start_i, int start_j, int start_k);
 
-    double maxAbsoluteErrorInner(const Grid3D &grid, const Grid3D &another) const;
+    virtual double maxAbsoluteErrorInner(const Grid3D &grid, const Grid3D &another);
 
-    double sumSquaredErrorInner(const Grid3D &grid, const Grid3D &another) const;
+    virtual double sumSquaredErrorInner(const Grid3D &grid, const Grid3D &another);
 
-    double maxRelativeErrorInner(const Grid3D &grid, const Grid3D &another) const;
+    virtual double maxRelativeErrorInner(const Grid3D &grid, const Grid3D &another);
 
-private:
+protected:
     const U u;
     const Phi phi;
 
@@ -37,11 +36,9 @@ private:
     const double h_z;
     const double tau;
 
-    friend std::ostream &operator<<(std::ostream &out, const MathSolver &solver);
+    friend std::ostream &operator<<(std::ostream &out, const MathSolver *solver);
 
     double laplacian(const Grid3D &g, int i, int j, int k) const;
-
-    double laplacian(const Phi &phi, double x, double y, double z, double h) const;
 };
 
-std::ostream &operator<<(std::ostream &out, const MathSolver &solver);
+std::ostream &operator<<(std::ostream &out, const MathSolver *solver);

@@ -2,8 +2,13 @@
 
 #include "Grid3D.h"
 #include "functions.h"
+#include "MathSolver.h"
 
-void makeStepWithCuda(Grid3D &grid, Grid3D &previous_1, Grid3D &previous_2,
-                      double h_x, double h_y, double h_z, double sqr_tau);
+class CudaSolver : public MathSolver {
+public:
+    CudaSolver(double T, double L_x, double L_y, double L_z, int N, int K, U u, Phi phi);
 
-void fillByGtWithCuda(Grid3D &grid, U u, int n, double tau, int start_i, int start_j, int start_k);
+    void makeStepForInnerNodes(Grid3D &grid, const Grid3D &previous_1, const Grid3D &previous_2);
+
+    void fillByGroundTruth(Grid3D &grid, int n, int start_i, int start_j, int start_k);
+};

@@ -1,6 +1,5 @@
 #include "MathSolver.h"
 #include "utils.h"
-#include "CudaSolver.cuh"
 #include <omp.h>
 
 MathSolver::MathSolver(double T, double L_x, double L_y, double L_z, int N, int K, U u, Phi phi)
@@ -13,7 +12,7 @@ MathSolver::MathSolver(double T, double L_x, double L_y, double L_z, int N, int 
           h_z(L_z / N),
           tau(T / K) {}
 
-void MathSolver::init_0(Grid3D &grid, int start_i, int start_j, int start_k) const {
+void MathSolver::init_0(Grid3D &grid, int start_i, int start_j, int start_k) {
 #pragma omp parallel for
     for (int i = 0; i < grid.shape[0]; ++i) {
         for (int j = 0; j < grid.shape[1]; ++j) {
@@ -28,7 +27,7 @@ void MathSolver::init_0(Grid3D &grid, int start_i, int start_j, int start_k) con
     }
 }
 
-void MathSolver::init_1(Grid3D &grid, Grid3D &previous) const {
+void MathSolver::init_1(Grid3D &grid, Grid3D &previous) {
 #pragma omp parallel for
     for (int i = 1; i < grid.shape[0] - 1; ++i) {
         for (int j = 1; j < grid.shape[1] - 1; ++j) {
@@ -48,45 +47,38 @@ double MathSolver::laplacian(const Grid3D &g, int i, int j, int k) const {
 }
 
 /** Fills n-th layer of grid. It depends on two previous layers. */
-void MathSolver::makeStepForInnerNodes(Grid3D &grid, const Grid3D &previous_1, const Grid3D &previous_2) const {
-    makeStepWithCuda(
-            grid,
-            const_cast<Grid3D &>(previous_1),
-            const_cast<Grid3D &>(previous_2),
-            h_x, h_y, h_z, sqr(tau)
-    );
-//#pragma omp parallel for
-//    for (int i = 1; i < grid.shape[0] - 1; ++i) {
-//        for (int j = 1; j < grid.shape[1] - 1; ++j) {
-//            for (int k = 1; k < grid.shape[2] - 1; ++k) {
-//                double result = 2.0 * previous_1(i, j, k) - previous_2(i, j, k) +
-//                                sqr(tau) * laplacian(previous_1, i, j, k);
-//                if (grid(i, j, k) != result) {
-//                    LOG << "unmatch: " << grid(i, j, k) << " " << result << endl;
-//                }
-//            }
-//        }
-//    }
+void MathSolver::makeStepForInnerNodes(Grid3D &grid, const Grid3D &previous_1, const Grid3D &previous_2) {
+#pragma omp parallel for
+    for (int i = 1; i < grid.shape[0] - 1; ++i) {
+        for (int j = 1; j < grid.shape[1] - 1; ++j) {
+            for (int k = 1; k < grid.shape[2] - 1; ++k) {
+                double result = 2.0 * previous_1(i, j, k) - previous_2(i, j, k) +
+                                sqr(tau) * laplacian(previous_1, i, j, k);
+                if (grid(i, j, k) != result) {
+                    LOG << "unmatch: " << grid(i, j, k) << " " << result << endl;
+                }
+            }
+        }
+    }
 }
 
-void MathSolver::fillByGroundTruth(Grid3D &grid, int n, int start_i, int start_j, int start_k) const {
-    fillByGtWithCuda(grid, u, n, tau, start_i, start_j, start_k);
-//#pragma omp parallel for
-//    for (int i = 0; i < grid.shape[0]; ++i) {
-//        for (int j = 0; j < grid.shape[1]; ++j) {
-//            for (int k = 0; k < grid.shape[2]; ++k) {
-//                grid(i, j, k) = u(
-//                        tau * n,
-//                        h_x * (start_i + i),
-//                        h_y * (start_j + j),
-//                        h_z * (start_k + k)
-//                );
-//            }
-//        }
-//    }
+void MathSolver::fillByGroundTruth(Grid3D &grid, int n, int start_i, int start_j, int start_k) {
+#pragma omp parallel for
+    for (int i = 0; i < grid.shape[0]; ++i) {
+        for (int j = 0; j < grid.shape[1]; ++j) {
+            for (int k = 0; k < grid.shape[2]; ++k) {
+                grid(i, j, k) = u(
+                        tau * n,
+                        h_x * (start_i + i),
+                        h_y * (start_j + j),
+                        h_z * (start_k + k)
+                );
+            }
+        }
+    }
 }
 
-double MathSolver::maxAbsoluteErrorInner(const Grid3D &grid, const Grid3D &another) const {
+double MathSolver::maxAbsoluteErrorInner(const Grid3D &grid, const Grid3D &another) {
     double c_norm = 0;
     for (int i = 1; i < grid.shape[0] - 1; ++i) {
         for (int j = 1; j < grid.shape[1] - 1; ++j) {
@@ -101,7 +93,7 @@ double MathSolver::maxAbsoluteErrorInner(const Grid3D &grid, const Grid3D &anoth
     return c_norm;
 }
 
-double MathSolver::sumSquaredErrorInner(const Grid3D &grid, const Grid3D &another) const {
+double MathSolver::sumSquaredErrorInner(const Grid3D &grid, const Grid3D &another) {
     double sum = 0;
     for (int i = 1; i < grid.shape[0] - 1; ++i) {
         for (int j = 1; j < grid.shape[1] - 1; ++j) {
@@ -113,7 +105,7 @@ double MathSolver::sumSquaredErrorInner(const Grid3D &grid, const Grid3D &anothe
     return sum;
 }
 
-double MathSolver::maxRelativeErrorInner(const Grid3D &grid, const Grid3D &another) const {
+double MathSolver::maxRelativeErrorInner(const Grid3D &grid, const Grid3D &another) {
     double reduced = 0.0;
     for (int i = 1; i < grid.shape[0] - 1; ++i) {
         for (int j = 1; j < grid.shape[1] - 1; ++j) {
@@ -130,13 +122,13 @@ double MathSolver::maxRelativeErrorInner(const Grid3D &grid, const Grid3D &anoth
     return reduced;
 }
 
-std::ostream &operator<<(std::ostream &out, const MathSolver &solver) {
+std::ostream &operator<<(std::ostream &out, const MathSolver *solver) {
     return out << "MathSolver: "
-               << "N = " << solver._N << ", "
-               << "K = " << solver.K << ", "
-               << "h_x = " << solver.h_x << ", "
-               << "h_y = " << solver.h_y << ", "
-               << "h_z = " << solver.h_z << ", "
-               << "tau = " << solver.tau;
+               << "N = " << solver->_N << ", "
+               << "K = " << solver->K << ", "
+               << "h_x = " << solver->h_x << ", "
+               << "h_y = " << solver->h_y << ", "
+               << "h_z = " << solver->h_z << ", "
+               << "tau = " << solver->tau;
 }
 

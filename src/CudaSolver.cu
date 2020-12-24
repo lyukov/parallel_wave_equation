@@ -1,5 +1,7 @@
 #include "CudaSolver.cuh"
 #include "utils.h"
+#include <thrust/device_vector.h>
+#include <thrust/copy.h>
 #include <cstdlib>
 #include <cuda.h>
 #include <cmath>
@@ -39,7 +41,6 @@ __constant__ double d_tau;
 __constant__ double d_h_x;
 __constant__ double d_h_y;
 __constant__ double d_h_z;
-__constant__ double d_sqr_tau;
 
 __constant__ double d_L_x;
 __constant__ double d_L_y;
@@ -64,7 +65,7 @@ void cuda_step(double *grid, double *previous_1, double *previous_2) {
     int index = i * d_cfI + j * d_cfJ + k;
 
     grid[index] = 2.0 * previous_1[index] - previous_2[index] +
-                  d_sqr_tau * laplacian(previous_1, index);
+                  d_tau * d_tau * laplacian(previous_1, index);
 }
 
 __device__
@@ -88,8 +89,7 @@ void cuda_fillByGt(double *grid, int n) {
     );
 }
 
-void makeStepWithCuda(Grid3D &grid, Grid3D &previous_1, Grid3D &previous_2,
-                      double h_x, double h_y, double h_z, double sqr_tau) {
+void CudaSolver::makeStepForInnerNodes(Grid3D &grid, const Grid3D &previous_1, const Grid3D &previous_2) {
     int blockSize = grid.shape[2] - 2;
     int gridInBlocks = (grid.shape[0] - 2) * (grid.shape[1] - 2);
 
@@ -114,7 +114,7 @@ void makeStepWithCuda(Grid3D &grid, Grid3D &previous_1, Grid3D &previous_2,
     cudaMemcpyToSymbol(d_h_x, &h_x, sizeof(double));
     cudaMemcpyToSymbol(d_h_y, &h_y, sizeof(double));
     cudaMemcpyToSymbol(d_h_z, &h_z, sizeof(double));
-    cudaMemcpyToSymbol(d_sqr_tau, &sqr_tau, sizeof(double));
+    cudaMemcpyToSymbol(d_tau, &tau, sizeof(double));
 
     SAFE_KERNEL_CALL((cuda_step<<<gridInBlocks, blockSize>>>(d_grid, d_previous_1, d_previous_2)));
 
@@ -125,7 +125,7 @@ void makeStepWithCuda(Grid3D &grid, Grid3D &previous_1, Grid3D &previous_2,
     SAFE_CALL(cudaFree(d_previous_2));
 }
 
-void fillByGtWithCuda(Grid3D &grid, U u, int n, double tau, int start_i, int start_j, int start_k) {
+void CudaSolver::fillByGroundTruth(Grid3D &grid, int n, int start_i, int start_j, int start_k) {
     int blockSize = grid.shape[2];
     int gridInBlocks = grid.shape[0] * grid.shape[1];
 
@@ -156,3 +156,7 @@ void fillByGtWithCuda(Grid3D &grid, U u, int n, double tau, int start_i, int sta
 
     SAFE_CALL(cudaFree(d_gt_grid));
 }
+
+CudaSolver::CudaSolver(
+        double T, double L_x, double L_y, double L_z, int N, int K, U u, Phi phi
+) : MathSolver(T, L_x, L_y, L_z, N, K, u, phi) {}

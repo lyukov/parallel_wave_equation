@@ -4,6 +4,7 @@
 #include <sstream>
 #include <cstdlib>
 
+#include "CudaSolver.cuh"
 #include "MathSolver.h"
 #include "functions.h"
 #include "utils.h"
@@ -48,7 +49,7 @@ int main(int argc, char **argv) {
     Phi phi(L_x, L_y, L_z);
     U u(L_x, L_y, L_z);
 
-    MathSolver solver(T, L_x, L_y, L_z, N, K, u, phi);
+    MathSolver *solver = new CudaSolver(T, L_x, L_y, L_z, N, K, u, phi);
     if (mpi.isMainProcess()) {
         csvOut << label << TAB << nProcessors
                << TAB << L << TAB << T << TAB << N << TAB << K
@@ -56,14 +57,14 @@ int main(int argc, char **argv) {
         LOG << "Num of processors: " << nProcessors << endl;
         LOG << solver << endl;
     }
-    Block block(&mpi, &solver, splits_X, splits_Y, splits_Z, N);
+    Block block(&mpi, solver, splits_X, splits_Y, splits_Z, N);
 
     Grid3D groundTruth(block.shape[0], block.shape[1], block.shape[2]);
 
     double error;
     for (int iter = 0; iter <= K; ++iter) {
         block.makeStep();
-        solver.fillByGroundTruth(
+        solver->fillByGroundTruth(
                 groundTruth,
                 iter,
                 block.start[0] - 1,
