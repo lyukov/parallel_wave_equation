@@ -265,7 +265,8 @@ void CudaSolver::fillByGroundTruth(Grid3D &grid, int n, int start_i, int start_j
 struct cuda_c1 {
     __host__ __device__
     double operator()(const double &x1, const double &x2) const {
-        return abs(x1 - x2);
+        double error = x1 - x2;
+        return error > 0 ? error : -error;
     }
 };
 
@@ -277,6 +278,7 @@ double CudaSolver::maxAbsoluteErrorInner(Grid3D &grid, Grid3D &another) {
     SAFE_CALL(cudaMalloc((void **) &d_error, sizeInBytes));
     SAFE_CALL(cudaMemcpy(d_grid, grid.getFlatten().data(), sizeInBytes, cudaMemcpyHostToDevice));
     SAFE_CALL(cudaMemcpy(d_another, another.getFlatten().data(), sizeInBytes, cudaMemcpyHostToDevice));
+    LOG << "Transform started" << endl;
     SAFE_KERNEL_CALL(thrust::transform(d_grid, d_grid + flatSize, d_another, d_error, cuda_c1()));
     LOG << "Transform finished" << endl;
     double error = thrust::reduce(thrust::device, d_error, d_error + flatSize, 0.0, thrust::maximum<double>());
