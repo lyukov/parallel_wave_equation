@@ -91,7 +91,7 @@ void cuda_fillByGt(double *grid, int n) {
 
 CudaSolver::CudaSolver(
         double T, double L_x, double L_y, double L_z, int N, int K, U u, Phi phi
-) : MathSolver(T, L_x, L_y, L_z, N, K, u, phi) {
+) : CpuSolver(T, L_x, L_y, L_z, N, K, u, phi) {
     cudaMemcpyToSymbol(d_h_x, &h_x, sizeof(double));
     cudaMemcpyToSymbol(d_h_y, &h_y, sizeof(double));
     cudaMemcpyToSymbol(d_h_z, &h_z, sizeof(double));
@@ -171,10 +171,18 @@ struct cuda_c1
 };
 
 double CudaSolver::maxAbsoluteErrorInner(Grid3D &grid, Grid3D &another) {
-    //return MathSolver::maxAbsoluteErrorInner(grid, another);
-    thrust::device_vector<double> d_grid(grid.getFlatten().begin(), grid.getFlatten().end());
-    thrust::device_vector<double> d_another(another.getFlatten().begin(), another.getFlatten().end());
-    thrust::device_vector<double> error(grid.size);
-    thrust::transform(d_grid.begin(), d_grid.end(), d_another.begin(), error.begin(), cuda_c1<double>());
-    return thrust::reduce(error.begin(), error.end(), 0, thrust::maximum<double>());
+    return CpuSolver::maxAbsoluteErrorInner(grid, another);
+//    thrust::device_vector<double> d_grid(grid.getFlatten().begin(), grid.getFlatten().end());
+//    thrust::device_vector<double> d_another(another.getFlatten().begin(), another.getFlatten().end());
+//    thrust::device_vector<double> d_error(grid.size);
+//    thrust::transform(d_grid.begin(), d_grid.end(), d_another.begin(), d_error.begin(), cuda_c1<double>());
+//    return thrust::reduce(d_error.begin(), d_error.end(), 0, thrust::maximum<double>());
+}
+
+void CudaSolver::init_0(Grid3D &grid, int start_i, int start_j, int start_k) {
+    CpuSolver::init_0(grid, start_i, start_j, start_k);
+}
+
+void CudaSolver::init_1(Grid3D &grid, Grid3D &previous) {
+    CpuSolver::init_1(grid, previous);
 }

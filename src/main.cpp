@@ -5,7 +5,7 @@
 #include <cstdlib>
 
 #include "CudaSolver.cuh"
-#include "MathSolver.h"
+#include "CpuSolver.h"
 #include "functions.h"
 #include "utils.h"
 #include "MPIProxy.h"

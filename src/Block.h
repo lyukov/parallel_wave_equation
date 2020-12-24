@@ -3,7 +3,7 @@
 #include <vector>
 #include "MPIProxy.h"
 #include "Grid3D.h"
-#include "MathSolver.h"
+#include "CpuSolver.h"
 
 const int N_GRIDS = 3;
 

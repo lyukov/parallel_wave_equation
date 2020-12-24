@@ -1,27 +1,25 @@
 #pragma once
 
-#include "functions.h"
 #include "Grid3D.h"
-#include "utils.h"
-#include <iostream>
+#include "functions.h"
 
 class MathSolver {
 public:
     MathSolver(double T, double L_x, double L_y, double L_z, int N, int K, U u, Phi phi);
 
-    virtual void init_0(Grid3D &grid, int start_i, int start_j, int start_k);
+    virtual ~MathSolver() {}
 
-    virtual void init_1(Grid3D &grid, Grid3D &previous);
+    virtual void init_0(Grid3D &grid, int start_i, int start_j, int start_k) = 0;
 
-    virtual void makeStepForInnerNodes(Grid3D &grid, Grid3D &previous_1, Grid3D &previous_2);
+    virtual void init_1(Grid3D &grid, Grid3D &previous) = 0;
 
-    virtual void fillByGroundTruth(Grid3D &grid, int n, int start_i, int start_j, int start_k);
+    virtual void makeStepForInnerNodes(Grid3D &grid, Grid3D &previous_1, Grid3D &previous_2) = 0;
 
-    virtual double maxAbsoluteErrorInner(Grid3D &grid, Grid3D &another);
+    virtual void fillByGroundTruth(Grid3D &grid, int n, int start_i, int start_j, int start_k) = 0;
 
-    virtual double sumSquaredErrorInner(Grid3D &grid, Grid3D &another);
+    virtual double maxAbsoluteErrorInner(Grid3D &grid, Grid3D &another) = 0;
 
-    virtual double maxRelativeErrorInner(const Grid3D &grid, const Grid3D &another);
+    virtual double sumSquaredErrorInner(Grid3D &grid, Grid3D &another) = 0;
 
 protected:
     const U u;
@@ -38,7 +36,6 @@ protected:
 
     friend std::ostream &operator<<(std::ostream &out, const MathSolver *solver);
 
-    double laplacian(const Grid3D &g, int i, int j, int k) const;
 };
 
 std::ostream &operator<<(std::ostream &out, const MathSolver *solver);

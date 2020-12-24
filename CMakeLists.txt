@@ -14,6 +14,8 @@ add_executable(Task2
         src/main.cpp
         src/MathSolver.cpp
         src/MathSolver.h
+        src/CpuSolver.cpp
+        src/CpuSolver.h
         src/Block.cpp src/Block.h
         src/MPIProxy.cpp src/MPIProxy.h
         src/CudaSolver.cuh src/CudaSolver.cu)
