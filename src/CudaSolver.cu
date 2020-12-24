@@ -302,7 +302,7 @@ double CudaSolver::sumSquaredErrorInner(Grid3D &grid, Grid3D &another) {
     SAFE_CALL(cudaMemcpy(d_grid, grid.getFlatten().data(), sizeInBytes, cudaMemcpyHostToDevice));
     SAFE_CALL(cudaMemcpy(d_another, another.getFlatten().data(), sizeInBytes, cudaMemcpyHostToDevice));
     SAFE_KERNEL_CALL((cuda_squared_error<<<gridSizeInner, blockSizeInner>>>(d_grid, d_another, d_error)));
-    double error = thrust::reduce(thrust::device, d_error, d_error + flatSize, 0.0, thrust::sum<double>());
+    double error = thrust::reduce(thrust::device, d_error, d_error + flatSize, 0.0, thrust::plus<double>());
     SAFE_CALL(cudaFree(d_grid));
     SAFE_CALL(cudaFree(d_another));
     SAFE_CALL(cudaFree(d_error));
