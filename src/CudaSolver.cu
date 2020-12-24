@@ -205,7 +205,8 @@ CudaSolver::CudaSolver(double T, double L_x, double L_y, double L_z, int N, int 
           gridSizeFull(shapeX * shapeY),
           blockSizeFull(shapeZ),
           gridSizeInner((shapeX - 2) * (shapeY - 2)),
-          blockSizeInner(shapeZ - 2) {
+          blockSizeInner(shapeZ - 2),
+          grid3D(shapeX, shapeY, shapeZ) {
 
     cudaMemcpyToSymbol(d_h_x, &h_x, sizeof(double));
     cudaMemcpyToSymbol(d_h_y, &h_y, sizeof(double));
