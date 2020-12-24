@@ -78,7 +78,7 @@ void cuda_fillByGt(double *grid, int n) {
     int j = idx / d_shapeZ;
     int k = idx % d_shapeZ;
     int index = i * d_cfI + j * d_cfJ + k;
-    grid[index] = u(
+    grid[index] = cuda_u(
             d_tau * n,
             d_h_x * (d_start_i + i),
             d_h_y * (d_start_j + j),
