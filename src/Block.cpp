@@ -40,7 +40,7 @@ Block::Block(
     }
 }
 
-const Grid3D &Block::getCurrentState() const {
+Grid3D &Block::getCurrentState() {
     return grids[(iteration + N_GRIDS - 1) % N_GRIDS];
 }
 
@@ -114,7 +114,7 @@ int Block::getNeighborId(int axis, int direction) const {
            neighbor[2];
 }
 
-double Block::printError(Grid3D &groundTruth) const {
+double Block::printError(Grid3D &groundTruth) {
     //if (iteration % 10) return;
     double absoluteError = mpi->maxOverAll(
             solver->maxAbsoluteErrorInner(getCurrentState(), groundTruth)

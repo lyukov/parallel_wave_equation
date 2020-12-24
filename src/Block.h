@@ -18,9 +18,9 @@ public:
 
     void makeStep();
 
-    const Grid3D &getCurrentState() const;
+    Grid3D &getCurrentState();
 
-    double printError(Grid3D &groundTruth) const;
+    double printError(Grid3D &groundTruth);
 
 private:
     int N;
