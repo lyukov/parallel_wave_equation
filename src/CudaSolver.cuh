@@ -20,6 +20,7 @@ public:
 
 private:
     const unsigned long sizeInBytes;
+    const unsigned long flatSize;
     const int blockSizeFull;
     const int blockSizeInner;
     const int gridSizeFull;
