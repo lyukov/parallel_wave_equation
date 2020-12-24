@@ -148,6 +148,7 @@ void fillByGtWithCuda(Grid3D &grid, U u, int n, double tau, int start_i, int sta
     cudaMemcpyToSymbol(d_L_x, &u.L_x, sizeof(double));
     cudaMemcpyToSymbol(d_L_y, &u.L_y, sizeof(double));
     cudaMemcpyToSymbol(d_L_z, &u.L_z, sizeof(double));
+    cudaMemcpyToSymbol(d_a_t, &u.a_t, sizeof(double));
     cudaMemcpyToSymbol(d_tau, &tau, sizeof(double));
 
     SAFE_KERNEL_CALL((cuda_fillByGt<<<gridInBlocks, blockSize>>>(d_gt_grid, n)));
