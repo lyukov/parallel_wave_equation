@@ -35,6 +35,8 @@ cudaError_t cudaMemcpyToSymbol(T &symbol, const void *src, size_t count);
 
 cudaError_t cudaMemcpy(void *dst, const void *src, size_t count, enum cudaMemcpyKind kind);
 
+cudaError_t cudaMemset(void *dst, int value, size_t count);
+
 char *cudaGetErrorString(cudaError_t err);
 
 int printf(const char *format, ...);
@@ -286,6 +288,7 @@ double CudaSolver::maxAbsoluteErrorInner(Grid3D &grid, Grid3D &another) {
     SAFE_CALL(cudaMalloc((void **) &d_error, sizeInBytes));
     SAFE_CALL(cudaMemcpy(d_grid, grid.getFlatten().data(), sizeInBytes, cudaMemcpyHostToDevice));
     SAFE_CALL(cudaMemcpy(d_another, another.getFlatten().data(), sizeInBytes, cudaMemcpyHostToDevice));
+    SAFE_CALL(cudaMemset(d_error, 0, sizeInBytes));
     SAFE_KERNEL_CALL((cuda_c1<<<gridSizeInner, blockSizeInner>>>(d_grid, d_another, d_error)));
     double error = thrust::reduce(thrust::device, d_error, d_error + flatSize, 0.0, thrust::maximum<double>());
     SAFE_CALL(cudaFree(d_grid));
@@ -301,6 +304,7 @@ double CudaSolver::sumSquaredErrorInner(Grid3D &grid, Grid3D &another) {
     SAFE_CALL(cudaMalloc((void **) &d_error, sizeInBytes));
     SAFE_CALL(cudaMemcpy(d_grid, grid.getFlatten().data(), sizeInBytes, cudaMemcpyHostToDevice));
     SAFE_CALL(cudaMemcpy(d_another, another.getFlatten().data(), sizeInBytes, cudaMemcpyHostToDevice));
+    SAFE_CALL(cudaMemset(d_error, 0, sizeInBytes));
     SAFE_KERNEL_CALL((cuda_squared_error<<<gridSizeInner, blockSizeInner>>>(d_grid, d_another, d_error)));
     double error = thrust::reduce(thrust::device, d_error, d_error + flatSize, 0.0, thrust::plus<double>());
     SAFE_CALL(cudaFree(d_grid));
