@@ -129,9 +129,26 @@ void cuda_step(double *grid, double *previous_1, double *previous_2) {
     int i, j, k;
     coords_inner(idx, i, j, k);
     int index = flat_index(i, j, k);
-
     grid[index] = 2.0 * previous_1[index] - previous_2[index] +
                   d_tau * d_tau * laplacian(previous_1, index);
+}
+
+__global__
+void cuda_c1(double* left, double* right, double *result) {
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    int i, j, k;
+    coords_inner(idx, i, j, k);
+    int index = flat_index(i, j, k);
+    result[index] = abs(left[index] - right[index]);
+}
+
+__global__
+void cuda_squared_error(double* left, double* right, double *result) {
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    int i, j, k;
+    coords_inner(idx, i, j, k);
+    int index = flat_index(i, j, k);
+    result[index] = pow(left[index] - right[index], 2);
 }
 
 __device__
@@ -262,14 +279,6 @@ void CudaSolver::fillByGroundTruth(Grid3D &grid, int n, int start_i, int start_j
     SAFE_CALL(cudaFree(d_gt_grid));
 }
 
-struct cuda_c1 {
-    __host__ __device__
-    double operator()(const double &x1, const double &x2) const {
-        double error = x1 - x2;
-        return error > 0 ? error : -error;
-    }
-};
-
 double CudaSolver::maxAbsoluteErrorInner(Grid3D &grid, Grid3D &another) {
     //return CpuSolver::maxAbsoluteErrorInner(grid, another);
     double *d_grid, *d_another, *d_error;
@@ -279,7 +288,7 @@ double CudaSolver::maxAbsoluteErrorInner(Grid3D &grid, Grid3D &another) {
     SAFE_CALL(cudaMemcpy(d_grid, grid.getFlatten().data(), sizeInBytes, cudaMemcpyHostToDevice));
     SAFE_CALL(cudaMemcpy(d_another, another.getFlatten().data(), sizeInBytes, cudaMemcpyHostToDevice));
     LOG << "Transform started" << endl;
-    SAFE_KERNEL_CALL(thrust::transform(d_grid, d_grid + flatSize, d_another, d_error, cuda_c1()));
+    SAFE_KERNEL_CALL((cuda_c1<<<gridSizeInner, blockSizeInner>>>(d_grid, d_another, d_error)));
     LOG << "Transform finished" << endl;
     double error = thrust::reduce(thrust::device, d_error, d_error + flatSize, 0.0, thrust::maximum<double>());
     LOG << "Reduce finished" << endl;
