@@ -172,8 +172,8 @@ struct cuda_c1
 
 double CudaSolver::maxAbsoluteErrorInner(const Grid3D &grid, const Grid3D &another) {
     //return MathSolver::maxAbsoluteErrorInner(grid, another);
-    thrust::device_vector<double> d_grid = const_cast<Grid3D &>(grid.getFlatten());
-    thrust::device_vector<double> d_another = const_cast<Grid3D &>(another.getFlatten());
+    thrust::device_vector<double> d_grid = const_cast<Grid3D &>(grid).getFlatten();
+    thrust::device_vector<double> d_another = const_cast<Grid3D &>(another).getFlatten();
     thrust::device_vector<double> error(grid.size);
     thrust::transform(d_grid.begin(), d_grid.end(), d_another.begin(), error.begin(), cuda_c1<double>());
     return thrust::reduce(error.begin(), error.end(), 0,  thrust::maximum<double>());
