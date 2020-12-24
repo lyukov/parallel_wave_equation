@@ -55,15 +55,34 @@ double laplacian(double *g, int index) {
            (g[index - 1] - 2.0 * center + g[index + 1]) / (d_h_z * d_h_z);
 }
 
-__global__
-void cuda_step(double *grid, double *previous_1, double *previous_2) {
+__device__
+dim3 coords_inner() {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     int i = idx / (d_shapeYZ) + 1;
     idx %= (d_shapeYZ);
     int j = idx / d_shapeZ + 1;
     int k = idx % d_shapeZ + 1;
-    int index = i * d_cfI + j * d_cfJ + k;
+    return dim3(i, j, k);
+}
 
+__device__
+dim3 coords_full() {
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    int i = idx / (d_shapeYZ);
+    idx %= (d_shapeYZ);
+    int j = idx / d_shapeZ;
+    int k = idx % d_shapeZ;
+    return dim3(i, j, k);
+}
+
+__device__
+int flat_index(dim3 coords) {
+    return coords.x * d_cfI + coords.y * d_cfJ + coords.z;
+}
+
+__global__
+void cuda_step(double *grid, double *previous_1, double *previous_2) {
+    int index = flat_index(coords_inner());
     grid[index] = 2.0 * previous_1[index] - previous_2[index] +
                   d_tau * d_tau * laplacian(previous_1, index);
 }
@@ -73,19 +92,31 @@ double cuda_u(double t, double x, double y, double z) {
     return sin(2 * M_PI * x / d_L_x) * sin(M_PI * y / d_L_y) * sin(2 * M_PI * z / d_L_z) * cos(d_a_t * t);
 }
 
+__device__
+double cuda_phi(double x, double y, double z) {
+    return sin(2 * M_PI * x / d_L_x) * sin(M_PI * y / d_L_y) * sin(2 * M_PI * z / d_L_z);
+}
+
 __global__
 void cuda_fillByGt(double *grid, int n) {
-    int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    int i = idx / (d_gt_shapeYZ);
-    idx %= (d_gt_shapeYZ);
-    int j = idx / d_gt_shapeZ;
-    int k = idx % d_gt_shapeZ;
-    int index = i * d_cfI + j * d_cfJ + k;
+    dim3 coords = coords_full();
+    int index = flat_index(coords);
     grid[index] = cuda_u(
             d_tau * n,
-            d_h_x * (d_start_i + i),
-            d_h_y * (d_start_j + j),
-            d_h_z * (d_start_k + k)
+            d_h_x * (d_start_i + coords.x),
+            d_h_y * (d_start_j + coords.y),
+            d_h_z * (d_start_k + coords.z)
+    );
+}
+
+__global__
+void cuda_init0(double *grid) {
+    dim3 coords = coords_inner();
+    int index = flat_index(coords);
+    grid[index] = cuda_phi(
+            d_h_x * (d_start_i + coords.x),
+            d_h_y * (d_start_j + coords.y),
+            d_h_z * (d_start_k + coords.z)
     );
 }
 
@@ -161,11 +192,10 @@ void CudaSolver::fillByGroundTruth(Grid3D &grid, int n, int start_i, int start_j
     SAFE_CALL(cudaFree(d_gt_grid));
 }
 
-template <typename T>
-struct cuda_c1
-{
+template<typename T>
+struct cuda_c1 {
     __host__ __device__
-    T operator()(const T& x1, const T& x2) const {
+    T operator()(const T &x1, const T &x2) const {
         return abs(x1 - x2);
     }
 };
