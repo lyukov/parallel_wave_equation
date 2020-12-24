@@ -177,7 +177,7 @@ void cuda_init1(double *grid, double *previous) {
     int i, j, k;
     coords_inner(idx, i, j, k);
     int index = flat_index(i, j, k);
-    grid[index] = previous[index] + 0.5 * sqr(d_tau) * laplacian(previous, index);
+    grid[index] = previous[index] + 0.5 * d_tau * d_tau * laplacian(previous, index);
 }
 
 CudaSolver::CudaSolver(
