@@ -232,6 +232,7 @@ void CudaSolver::init_1(Grid3D &grid, Grid3D &previous) {
     SAFE_KERNEL_CALL((cuda_init1<<<gridSizeInner, blockSizeInner>>>(d_gt_grid, d_previous)));
     SAFE_CALL(cudaMemcpy(grid.getFlatten().data(), d_gt_grid, sizeInBytes, cudaMemcpyDeviceToHost));
     SAFE_CALL(cudaFree(d_gt_grid));
+    SAFE_CALL(cudaFree(d_previous));
 }
 
 void CudaSolver::makeStepForInnerNodes(Grid3D &grid, Grid3D &previous_1, Grid3D &previous_2) {
@@ -261,10 +262,9 @@ void CudaSolver::fillByGroundTruth(Grid3D &grid, int n, int start_i, int start_j
     SAFE_CALL(cudaFree(d_gt_grid));
 }
 
-template<typename T>
 struct cuda_c1 {
     __host__ __device__
-    T operator()(const T &x1, const T &x2) const {
+    double operator()(const double &x1, const double &x2) const {
         return abs(x1 - x2);
     }
 };
@@ -277,6 +277,10 @@ double CudaSolver::maxAbsoluteErrorInner(Grid3D &grid, Grid3D &another) {
     SAFE_CALL(cudaMalloc((void **) &d_error, sizeInBytes));
     SAFE_CALL(cudaMemcpy(d_grid, grid.getFlatten().data(), sizeInBytes, cudaMemcpyHostToDevice));
     SAFE_CALL(cudaMemcpy(d_another, another.getFlatten().data(), sizeInBytes, cudaMemcpyHostToDevice));
-    thrust::transform(d_grid, d_grid + flatSize, d_another, d_error, cuda_c1<double>());
-    return thrust::reduce(thrust::device, d_error, d_error + flatSize, 0.0, thrust::maximum<double>());
+    SAFE_KERNEL_CALL(thrust::transform(d_grid, d_grid + flatSize, d_another, d_error, cuda_c1<double>()));
+    double error = thrust::reduce(thrust::device, d_error, d_error + flatSize, 0.0, thrust::maximum<double>());
+    SAFE_CALL(cudaFree(d_grid));
+    SAFE_CALL(cudaFree(d_another));
+    SAFE_CALL(cudaFree(d_error));
+    return error;
 }

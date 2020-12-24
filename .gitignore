@@ -9,3 +9,5 @@ a.out.dSYM
 bin
 *.gif
 *.csv
+*.nvvp
+new_run.sh
