@@ -12,5 +12,5 @@ public:
 
     void fillByGroundTruth(Grid3D &grid, int n, int start_i, int start_j, int start_k);
 
-    double maxAbsoluteErrorInner(Grid3D &grid, Grid3D &another);
+    double maxAbsoluteErrorInner(const Grid3D &grid, const Grid3D &another);
 };

@@ -161,7 +161,7 @@ void CudaSolver::fillByGroundTruth(Grid3D &grid, int n, int start_i, int start_j
     SAFE_CALL(cudaFree(d_gt_grid));
 }
 
-double CudaSolver::maxAbsoluteErrorInner(Grid3D &grid, Grid3D &another) {
+double CudaSolver::maxAbsoluteErrorInner(const Grid3D &grid, const Grid3D &another) {
     return MathSolver::maxAbsoluteErrorInner(grid, another);
     //thrust::device_vector<double> d_grid = grid.getFlatten();
     //thrust::device_vector<double> d_another = another.getFlatten();

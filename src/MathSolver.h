@@ -17,9 +17,9 @@ public:
 
     virtual void fillByGroundTruth(Grid3D &grid, int n, int start_i, int start_j, int start_k);
 
-    virtual double maxAbsoluteErrorInner(Grid3D &grid, Grid3D &another);
+    virtual double maxAbsoluteErrorInner(const Grid3D &grid, const Grid3D &another);
 
-    virtual double sumSquaredErrorInner(Grid3D &grid, Grid3D &another);
+    virtual double sumSquaredErrorInner(const Grid3D &grid, const Grid3D &another);
 
     virtual double maxRelativeErrorInner(const Grid3D &grid, const Grid3D &another);
 
