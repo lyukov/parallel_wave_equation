@@ -104,7 +104,6 @@ void makeStepWithCuda(Grid3D &grid, Grid3D &previous_1, Grid3D &previous_2,
     SAFE_CALL(cudaMalloc((void **) &d_grid, sizeInBytes));
     SAFE_CALL(cudaMalloc((void **) &d_previous_1, sizeInBytes));
     SAFE_CALL(cudaMalloc((void **) &d_previous_2, sizeInBytes));
-    SAFE_CALL(cudaMemcpy(d_grid, grid.getFlatten().data(), sizeInBytes, cudaMemcpyHostToDevice));
     SAFE_CALL(cudaMemcpy(d_previous_1, previous_1.getFlatten().data(), sizeInBytes, cudaMemcpyHostToDevice));
     SAFE_CALL(cudaMemcpy(d_previous_2, previous_2.getFlatten().data(), sizeInBytes, cudaMemcpyHostToDevice));
 
