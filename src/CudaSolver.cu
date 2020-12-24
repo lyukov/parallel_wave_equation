@@ -69,6 +69,7 @@ void makeStepWithCuda(Grid3D &grid, Grid3D &previous_1, Grid3D &previous_2,
             (grid.shape[1] - 2) / blockSize.y,
             (grid.shape[2] - 2) / blockSize.z
     );
+    LOG << "gridInBlocks: " << gridInBlocks.x << " " << gridInBlocks.y << " " << gridInBlocks.z << endl;
 
     size_t sizeInBytes = sizeof(double) * grid.size;
 
@@ -89,7 +90,7 @@ void makeStepWithCuda(Grid3D &grid, Grid3D &previous_1, Grid3D &previous_2,
     cudaMemcpyToSymbol(d_h_z, &h_z, sizeof(double));
     cudaMemcpyToSymbol(d_sqr_tau, &sqr_tau, sizeof(double));
 
-    SAFE_KERNEL_CALL((step<<<gridInBlocks, blockSize>>>(d_grid, d_previous_1, d_previous_2)));
+    SAFE_KERNEL_CALL((step<<<blockSize, gridInBlocks>>>(d_grid, d_previous_1, d_previous_2)));
 
     SAFE_CALL(cudaMemcpy(grid.getFlatten().data(), d_grid, sizeInBytes, cudaMemcpyDeviceToHost));
 
