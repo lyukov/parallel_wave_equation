@@ -30,6 +30,8 @@ __constant__ int d_cfI;
 __constant__ int d_cfJ;
 __constant__ int d_shapeYZ;
 __constant__ int d_shapeZ;
+__constant__ int d_gt_shapeYZ;
+__constant__ int d_gt_shapeZ;
 __constant__ int d_start_i;
 __constant__ int d_start_j;
 __constant__ int d_start_k;
@@ -73,10 +75,10 @@ double cuda_u(double t, double x, double y, double z) {
 __global__
 void cuda_fillByGt(double *grid, int n) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    int i = idx / (d_shapeYZ);
-    idx %= (d_shapeYZ);
-    int j = idx / d_shapeZ;
-    int k = idx % d_shapeZ;
+    int i = idx / (d_gt_shapeYZ);
+    idx %= (d_gt_shapeYZ);
+    int j = idx / d_gt_shapeZ;
+    int k = idx % d_gt_shapeZ;
     int index = i * d_cfI + j * d_cfJ + k;
     grid[index] = cuda_u(
             d_tau * n,
@@ -138,8 +140,8 @@ void fillByGtWithCuda(Grid3D &grid, U u, int n, double tau, int start_i, int sta
 
     cudaMemcpyToSymbol(d_cfI, &grid._cfI, sizeof(int));
     cudaMemcpyToSymbol(d_cfJ, &grid._cfJ, sizeof(int));
-    cudaMemcpyToSymbol(d_shapeYZ, &shapeYZ, sizeof(int));
-    cudaMemcpyToSymbol(d_shapeZ, &shapeZ, sizeof(int));
+    cudaMemcpyToSymbol(d_gt_shapeYZ, &shapeYZ, sizeof(int));
+    cudaMemcpyToSymbol(d_gt_shapeZ, &shapeZ, sizeof(int));
     cudaMemcpyToSymbol(d_start_i, &start_i, sizeof(int));
     cudaMemcpyToSymbol(d_start_j, &start_j, sizeof(int));
     cudaMemcpyToSymbol(d_start_k, &start_k, sizeof(int));
