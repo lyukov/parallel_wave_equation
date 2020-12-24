@@ -277,7 +277,7 @@ double CudaSolver::maxAbsoluteErrorInner(Grid3D &grid, Grid3D &another) {
     SAFE_CALL(cudaMalloc((void **) &d_error, sizeInBytes));
     SAFE_CALL(cudaMemcpy(d_grid, grid.getFlatten().data(), sizeInBytes, cudaMemcpyHostToDevice));
     SAFE_CALL(cudaMemcpy(d_another, another.getFlatten().data(), sizeInBytes, cudaMemcpyHostToDevice));
-    SAFE_KERNEL_CALL(thrust::transform(d_grid, d_grid + flatSize, d_another, d_error, cuda_c1<double>()));
+    SAFE_KERNEL_CALL(thrust::transform(d_grid, d_grid + flatSize, d_another, d_error, cuda_c1()));
     double error = thrust::reduce(thrust::device, d_error, d_error + flatSize, 0.0, thrust::maximum<double>());
     SAFE_CALL(cudaFree(d_grid));
     SAFE_CALL(cudaFree(d_another));
