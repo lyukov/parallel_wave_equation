@@ -18,7 +18,7 @@ add_executable(Task2
         src/MPIProxy.cpp src/MPIProxy.h
         src/CudaSolver.cuh src/CudaSolver.cu)
 
-set_target_properties(
-        Task2
-        PROPERTIES
-        CUDA_SEPARABLE_COMPILATION ON)
+#set_target_properties(
+#        Task2
+#        PROPERTIES
+#        CUDA_SEPARABLE_COMPILATION ON)

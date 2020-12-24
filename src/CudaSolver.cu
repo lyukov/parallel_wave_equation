@@ -27,6 +27,8 @@
 
 __constant__ int d_cfI;
 __constant__ int d_cfJ;
+__constant__ int d_shapeY;
+__constant__ int d_shapeZ;
 __constant__ double d_h_x;
 __constant__ double d_h_y;
 __constant__ double d_h_z;
@@ -42,9 +44,11 @@ double laplacian(double *g, int index) {
 
 __global__
 void step(double *grid, double *previous_1, double *previous_2) {
-    int i = blockIdx.x * blockDim.x + threadIdx.x + 1;
-    int j = blockIdx.y * blockDim.y + threadIdx.y + 1;
-    int k = blockIdx.z * blockDim.z + threadIdx.z + 1;
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    int i = idx / (d_shapeY * d_shapeZ) + 1;
+    idx %= (d_shapeY * d_shapeZ);
+    int j = idx / d_shapeZ + 1;
+    int k = idx % d_shapeZ + 1;
     int index = i * d_cfI + j * d_cfJ + k;
 
     double center = previous_1[index];
@@ -58,18 +62,11 @@ void step(double *grid, double *previous_1, double *previous_2) {
 
 void makeStepWithCuda(Grid3D &grid, Grid3D &previous_1, Grid3D &previous_2,
                       double h_x, double h_y, double h_z, double sqr_tau) {
-    dim3 blockSize = dim3(
-            1,
-            1,
-            grid.shape[2] - 2
-    );
-    LOG << "blockSize: " << blockSize.x << " " << blockSize.y << " " << blockSize.z << endl;
-    dim3 gridInBlocks = dim3(
-            (grid.shape[0] - 2) / blockSize.x,
-            (grid.shape[1] - 2) / blockSize.y,
-            (grid.shape[2] - 2) / blockSize.z
-    );
-    LOG << "gridInBlocks: " << gridInBlocks.x << " " << gridInBlocks.y << " " << gridInBlocks.z << endl;
+    int blockSize = grid.shape[2] - 2;
+    int gridInBlocks = (grid.shape[0] - 2) * (grid.shape[1] - 2);
+
+    int shapeY = grid.shape[1] - 2;
+    int shapeZ = grid.shape[2] - 2;
 
     size_t sizeInBytes = sizeof(double) * grid.size;
 
@@ -85,12 +82,14 @@ void makeStepWithCuda(Grid3D &grid, Grid3D &previous_1, Grid3D &previous_2,
 
     cudaMemcpyToSymbol(d_cfI, &grid._cfI, sizeof(int));
     cudaMemcpyToSymbol(d_cfJ, &grid._cfJ, sizeof(int));
+    cudaMemcpyToSymbol(d_shapeY, &shapeY, sizeof(int));
+    cudaMemcpyToSymbol(d_shapeZ, &shapeZ, sizeof(int));
     cudaMemcpyToSymbol(d_h_x, &h_x, sizeof(double));
     cudaMemcpyToSymbol(d_h_y, &h_y, sizeof(double));
     cudaMemcpyToSymbol(d_h_z, &h_z, sizeof(double));
     cudaMemcpyToSymbol(d_sqr_tau, &sqr_tau, sizeof(double));
 
-    SAFE_KERNEL_CALL((step<<<blockSize, gridInBlocks>>>(d_grid, d_previous_1, d_previous_2)));
+    SAFE_KERNEL_CALL((step<<<gridInBlocks, blockSize>>>(d_grid, d_previous_1, d_previous_2)));
 
     SAFE_CALL(cudaMemcpy(grid.getFlatten().data(), d_grid, sizeInBytes, cudaMemcpyDeviceToHost));
 
