@@ -249,7 +249,7 @@ CudaSolver::CudaSolver(double T, double L_x, double L_y, double L_z, int N, int 
     SAFE_CALL(cudaMemset(d_errorC1, 0, sizeInBytes));
     SAFE_CALL(cudaMemset(d_errorMSE, 0, sizeInBytes));
 
-    int maxSliceSize = max(grid3D.getSliseSize(0), max(grid3D.getSliseSize(1), grid3D.getSliseSize(2)));
+    int maxSliceSize = max(grid3D.getSliceSize(0), max(grid3D.getSliceSize(1), grid3D.getSliceSize(2)));
     h_slice.resize(maxSliceSize);
     SAFE_CALL(cudaMalloc((void **) &d_slice, sizeof(double) * maxSliceSize));
 }
