@@ -24,7 +24,7 @@ struct dim3 {
     int x, y, z;
 
     dim3(int x = 1, int y = 1, int z = 1);
-} blockIdx, blockDim, threadIdx; //
+} blockIdx, blockDim, threadIdx;
 
 struct cudaError_t {
     bool operator!=(cudaError_t &other);
@@ -197,6 +197,20 @@ void cuda_init1(double *grid, double *previous) {
     grid[index] = previous[index] + 0.5 * d_tau * d_tau * laplacian(previous, index);
 }
 
+__global__
+void cuda_get_slice(int c0, int c1, int c2, double *slice, double *grid) {
+    int grid_idx = c0 + blockIdx.x * c1 + threadIdx.x * c2;
+    int slice_idx = blockIdx.x * blockDim.x + threadIdx.x;
+    slice[slice_idx] = grid[grid_idx];
+}
+
+__global__
+void cuda_set_slice(int c0, int c1, int c2, double *slice, double *grid) {
+    int grid_idx = c0 + blockIdx.x * c1 + threadIdx.x * c2;
+    int slice_idx = blockIdx.x * blockDim.x + threadIdx.x;
+    grid[grid_idx] = slice[slice_idx];
+}
+
 CudaSolver::CudaSolver(double T, double L_x, double L_y, double L_z, int N, int K, U u, Phi phi,
                        int shapeX, int shapeY, int shapeZ)
         : MathSolver(T, L_x, L_y, L_z, N, K, u, phi),
@@ -234,6 +248,20 @@ CudaSolver::CudaSolver(double T, double L_x, double L_y, double L_z, int N, int 
     SAFE_CALL(cudaMalloc((void **) &d_errorMSE, sizeInBytes));
     SAFE_CALL(cudaMemset(d_errorC1, 0, sizeInBytes));
     SAFE_CALL(cudaMemset(d_errorMSE, 0, sizeInBytes));
+
+    int maxSliceSize = max(grid3D.getSliseSize(0), max(grid3D.getSliseSize(1), grid3D.getSliseSize(2)));
+    h_slice.resize(maxSliceSize);
+    SAFE_CALL(cudaMalloc((void **) &d_slice, sizeof(double) * maxSliceSize));
+}
+
+CudaSolver::~CudaSolver() {
+    for (int i = 0; i < N_GRIDS; ++i) {
+        SAFE_CALL(cudaFree(d_grids[i]));
+    }
+    SAFE_CALL(cudaFree(d_groundTruth));
+    SAFE_CALL(cudaFree(d_errorC1));
+    SAFE_CALL(cudaFree(d_errorMSE));
+    SAFE_CALL(cudaFree(d_slice));
 }
 
 void CudaSolver::init_0(int start_i, int start_j, int start_k) {
@@ -276,23 +304,45 @@ double CudaSolver::sumSquaredErrorInner(int n) {
     return thrust::reduce(thrust::device, d_errorMSE, d_errorMSE + flatSize, 0.0, thrust::plus<double>());
 }
 
-std::vector<double> CudaSolver::getSlice(int n, int index, int axis) {
-    SAFE_CALL(cudaMemcpy(grid3D.getFlatten().data(), getCurrentState(n), sizeInBytes, cudaMemcpyDeviceToHost));
-    return grid3D.getSlice(index, axis);
+void CudaSolver::getSliceParams(int axis, int &c0, int &c1, int &c2, int &gridSize, int &blockSize) const {
+    int cf[3] = {grid3D.shape[1] * grid3D.shape[2], grid3D.shape[2], 1};
+    c0 = cf[axis % 3];
+    c1 = cf[(axis + 1) % 3];
+    c2 = cf[(axis + 2) % 3];
+    gridSize = grid3D.shape[(axis + 1) % N_GRIDS];
+    blockSize = grid3D.shape[(axis + 2) % N_GRIDS];
 }
 
 int CudaSolver::getSliceSize(int axis) {
     return grid3D.getSliceSize(axis);
 }
 
+std::vector<double> CudaSolver::getSlice(int n, int index, int axis) {
+    int c0, c1, c2, gridSize, blockSize;
+    getSliceParams(axis, c0, c1, c2, gridSize, blockSize);
+    SAFE_KERNEL_CALL((cuda_get_slice<<<gridSize, blockSize>>>(
+            c0 * index, c1, c2, d_slice, getCurrentState(n)
+    )));
+    SAFE_CALL(cudaMemcpy(h_slice.data(), d_slice, getSliceSize(axis) * sizeof(double), cudaMemcpyDeviceToHost));
+    return std::vector<double>(h_slice.begin(), h_slice.begin() + getSliceSize(axis));
+}
+
 void CudaSolver::setSlice(int n, int index, int axis, std::vector<double> &slice) {
-    grid3D.setSlice(index, axis, slice);
-    SAFE_CALL(cudaMemcpy(getCurrentState(n), grid3D.getFlatten().data(), sizeInBytes, cudaMemcpyHostToDevice));
+    int c0, c1, c2, gridSize, blockSize;
+    getSliceParams(axis, c0, c1, c2, gridSize, blockSize);
+    SAFE_CALL(cudaMemcpy(d_slice, slice.data(), getSliceSize(axis) * sizeof(double), cudaMemcpyHostToDevice));
+    SAFE_KERNEL_CALL((cuda_set_slice<<<gridSize, blockSize>>>(
+            c0 * index, c1, c2, d_slice, getCurrentState(n)
+    )));
 }
 
 void CudaSolver::setZeros(int n, int index, int axis) {
-    grid3D.setZeros(index, axis);
-    SAFE_CALL(cudaMemcpy(getCurrentState(n), grid3D.getFlatten().data(), sizeInBytes, cudaMemcpyHostToDevice));
+    int c0, c1, c2, gridSize, blockSize;
+    getSliceParams(axis, c0, c1, c2, gridSize, blockSize);
+    SAFE_CALL(cudaMemset(d_slice, 0, getSliceSize(axis) * sizeof(double)));
+    SAFE_KERNEL_CALL((cuda_set_slice<<<gridSize, blockSize>>>(
+            c0 * index, c1, c2, d_slice, getCurrentState(n)
+    )));
 }
 
 double *CudaSolver::getCurrentState(int n) {

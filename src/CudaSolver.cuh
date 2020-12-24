@@ -9,6 +9,8 @@ public:
     CudaSolver(double T, double L_x, double L_y, double L_z, int N, int K, U u, Phi phi,
                int shapeX, int shapeY, int shapeZ);
 
+    ~CudaSolver() override;
+
     void init_0(int start_i, int start_j, int start_k) override;
 
     void init_1() override;
@@ -36,6 +38,8 @@ private:
 
     std::vector<double *> d_grids;
     double *d_groundTruth;
+    double *d_slice;
+    std::vector<double> h_slice;
     double *d_errorC1, *d_errorMSE;
     Grid3D grid3D;
 
@@ -45,4 +49,6 @@ private:
     const int blockSizeInner;
     const int gridSizeFull;
     const int gridSizeInner;
+
+    void getSliceParams(int axis, int &c0, int &c1, int &c2, int &gridSize, int &blockSize) const;
 };
