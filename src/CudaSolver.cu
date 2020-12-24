@@ -89,6 +89,19 @@ void cuda_fillByGt(double *grid, int n) {
     );
 }
 
+CudaSolver::CudaSolver(
+        double T, double L_x, double L_y, double L_z, int N, int K, U u, Phi phi
+) : MathSolver(T, L_x, L_y, L_z, N, K, u, phi) {
+    cudaMemcpyToSymbol(d_h_x, &h_x, sizeof(double));
+    cudaMemcpyToSymbol(d_h_y, &h_y, sizeof(double));
+    cudaMemcpyToSymbol(d_h_z, &h_z, sizeof(double));
+    cudaMemcpyToSymbol(d_tau, &tau, sizeof(double));
+    cudaMemcpyToSymbol(d_L_x, &u.L_x, sizeof(double));
+    cudaMemcpyToSymbol(d_L_y, &u.L_y, sizeof(double));
+    cudaMemcpyToSymbol(d_L_z, &u.L_z, sizeof(double));
+    cudaMemcpyToSymbol(d_a_t, &u.a_t, sizeof(double));
+}
+
 void CudaSolver::makeStepForInnerNodes(Grid3D &grid, Grid3D &previous_1, Grid3D &previous_2) {
     int blockSize = grid.shape[2] - 2;
     int gridInBlocks = (grid.shape[0] - 2) * (grid.shape[1] - 2);
@@ -111,10 +124,6 @@ void CudaSolver::makeStepForInnerNodes(Grid3D &grid, Grid3D &previous_1, Grid3D 
     cudaMemcpyToSymbol(d_cfJ, &grid._cfJ, sizeof(int));
     cudaMemcpyToSymbol(d_shapeYZ, &shapeYZ, sizeof(int));
     cudaMemcpyToSymbol(d_shapeZ, &shapeZ, sizeof(int));
-    cudaMemcpyToSymbol(d_h_x, &h_x, sizeof(double));
-    cudaMemcpyToSymbol(d_h_y, &h_y, sizeof(double));
-    cudaMemcpyToSymbol(d_h_z, &h_z, sizeof(double));
-    cudaMemcpyToSymbol(d_tau, &tau, sizeof(double));
 
     SAFE_KERNEL_CALL((cuda_step<<<gridInBlocks, blockSize>>>(d_grid, d_previous_1, d_previous_2)));
 
@@ -144,11 +153,6 @@ void CudaSolver::fillByGroundTruth(Grid3D &grid, int n, int start_i, int start_j
     cudaMemcpyToSymbol(d_start_i, &start_i, sizeof(int));
     cudaMemcpyToSymbol(d_start_j, &start_j, sizeof(int));
     cudaMemcpyToSymbol(d_start_k, &start_k, sizeof(int));
-    cudaMemcpyToSymbol(d_L_x, &u.L_x, sizeof(double));
-    cudaMemcpyToSymbol(d_L_y, &u.L_y, sizeof(double));
-    cudaMemcpyToSymbol(d_L_z, &u.L_z, sizeof(double));
-    cudaMemcpyToSymbol(d_a_t, &u.a_t, sizeof(double));
-    cudaMemcpyToSymbol(d_tau, &tau, sizeof(double));
 
     SAFE_KERNEL_CALL((cuda_fillByGt<<<gridInBlocks, blockSize>>>(d_gt_grid, n)));
 
@@ -157,6 +161,8 @@ void CudaSolver::fillByGroundTruth(Grid3D &grid, int n, int start_i, int start_j
     SAFE_CALL(cudaFree(d_gt_grid));
 }
 
-CudaSolver::CudaSolver(
-        double T, double L_x, double L_y, double L_z, int N, int K, U u, Phi phi
-) : MathSolver(T, L_x, L_y, L_z, N, K, u, phi) {}
+double CudaSolver::maxAbsoluteErrorInner(Grid3D &grid, Grid3D &another) {
+    return MathSolver::maxAbsoluteErrorInner(grid, another);
+    //thrust::device_vector<double> d_grid = grid.getFlatten();
+    //thrust::device_vector<double> d_another = another.getFlatten();
+}

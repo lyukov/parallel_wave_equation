@@ -11,4 +11,6 @@ public:
     void makeStepForInnerNodes(Grid3D &grid, Grid3D &previous_1, Grid3D &previous_2);
 
     void fillByGroundTruth(Grid3D &grid, int n, int start_i, int start_j, int start_k);
+
+    double maxAbsoluteErrorInner(Grid3D &grid, Grid3D &another);
 };
