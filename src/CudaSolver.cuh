@@ -30,6 +30,8 @@ public:
     void setZeros(int n, int index, int axis) override;
 
 private:
+    double *getCurrentState(int n);
+
     const int N_GRIDS = 3;
 
     std::vector<double *> d_grids;

@@ -277,7 +277,7 @@ double CudaSolver::sumSquaredErrorInner(int n) {
 }
 
 std::vector<double> CudaSolver::getSlice(int n, int index, int axis) {
-    SAFE_CALL(cudaMemcpy(grid3D.getFlatten().data(), d_grids[n], sizeInBytes, cudaMemcpyDeviceToHost));
+    SAFE_CALL(cudaMemcpy(grid3D.getFlatten().data(), getCurrentState(n), sizeInBytes, cudaMemcpyDeviceToHost));
     return grid3D.getSlice(index, axis);
 }
 
@@ -287,10 +287,14 @@ int CudaSolver::getSliceSize(int axis) {
 
 void CudaSolver::setSlice(int n, int index, int axis, std::vector<double> &slice) {
     grid3D.setSlice(index, axis, slice);
-    SAFE_CALL(cudaMemcpy(d_grids[n], grid3D.getFlatten().data(), sizeInBytes, cudaMemcpyHostToDevice));
+    SAFE_CALL(cudaMemcpy(getCurrentState(n), grid3D.getFlatten().data(), sizeInBytes, cudaMemcpyHostToDevice));
 }
 
 void CudaSolver::setZeros(int n, int index, int axis) {
     grid3D.setZeros(index, axis);
-    SAFE_CALL(cudaMemcpy(d_grids[n], grid3D.getFlatten().data(), sizeInBytes, cudaMemcpyHostToDevice));
+    SAFE_CALL(cudaMemcpy(getCurrentState(n), grid3D.getFlatten().data(), sizeInBytes, cudaMemcpyHostToDevice));
+}
+
+double *CudaSolver::getCurrentState(int n) {
+    return d_grids[n % N_GRIDS]
 }
