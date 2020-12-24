@@ -126,11 +126,9 @@ int flat_index(int i, int j, int k) {
 __global__
 void cuda_step(double *grid, double *previous_1, double *previous_2) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    int i = idx / (d_shapeYZ_inner) + 1;
-    idx %= (d_shapeYZ_inner);
-    int j = idx / d_shapeZ_inner + 1;
-    int k = idx % d_shapeZ_inner + 1;
-    int index = i * d_cfI + j * d_cfJ + k;
+    int i, j, k;
+    coords_inner(idx, i, j, k);
+    int index = flat_index(i, j, k);
 
     grid[index] = 2.0 * previous_1[index] - previous_2[index] +
                   d_tau * d_tau * laplacian(previous_1, index);
@@ -149,11 +147,9 @@ double cuda_phi(double x, double y, double z) {
 __global__
 void cuda_fillByGt(double *grid, int n) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    int i = idx / (d_shapeYZ);
-    idx %= (d_shapeYZ);
-    int j = idx / d_shapeZ;
-    int k = idx % d_shapeZ;
-    int index = i * d_cfI + j * d_cfJ + k;
+    int i, j, k;
+    coords_full(idx, i, j, k);
+    int index = flat_index(i, j, k);
     grid[index] = cuda_u(
             d_tau * n,
             d_h_x * (d_start_i + i),
@@ -165,11 +161,9 @@ void cuda_fillByGt(double *grid, int n) {
 __global__
 void cuda_init0(double *grid) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    int i = idx / (d_shapeYZ_inner) + 1;
-    idx %= (d_shapeYZ_inner);
-    int j = idx / d_shapeZ_inner + 1;
-    int k = idx % d_shapeZ_inner + 1;
-    int index = i * d_cfI + j * d_cfJ + k;
+    int i, j, k;
+    coords_inner(idx, i, j, k);
+    int index = flat_index(i, j, k);
     grid[index] = cuda_phi(
             d_h_x * (d_start_i + i),
             d_h_y * (d_start_j + j),
