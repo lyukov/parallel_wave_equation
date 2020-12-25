@@ -8,6 +8,7 @@
 MPIProxy::MPIProxy(int *argc, char ***argv) {
     MPI_Init(argc, argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &_rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &_n_proc);
 }
 
 MPIProxy::~MPIProxy() {
@@ -49,12 +50,6 @@ double MPIProxy::sumOverAll(double value) const {
     return result;
 }
 
-int MPIProxy::getNumOfProcessors() const {
-    int n_proc;
-    MPI_Comm_size(MPI_COMM_WORLD, &n_proc);
-    return n_proc;
-}
-
 void MPIProxy::barrier() const {
     MPI_Barrier(MPI_COMM_WORLD);
 }
@@ -65,4 +60,10 @@ bool MPIProxy::isMainProcess() const {
 
 double MPIProxy::time() const {
     return MPI_Wtime();
+}
+
+std::vector<int> MPIProxy::createDims(int nnodes, int ndims) const {
+    std::vector<int> dims(ndims, 1);
+    MPI_Dims_create(nnodes, ndims, dims.data());
+    return dims;
 }

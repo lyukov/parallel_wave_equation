@@ -19,9 +19,9 @@ std::string getTimestamp() {
 }
 
 int main(int argc, char **argv) {
-    if (argc <= 8) {
+    if (argc <= 5) {
         LOG_ERR << "argc = " << argc << endl;
-        LOG_ERR << "Usage: wave L T N K splits_X splits_Y splits_Z label" << endl;
+        LOG_ERR << "Usage: wave L T N K label" << endl;
         return 0;
     }
 
@@ -29,9 +29,6 @@ int main(int argc, char **argv) {
     double T = atof(argv[2]);
     int N = atoi(argv[3]);
     int K = atoi(argv[4]);
-    int splits_X = atoi(argv[5]);
-    int splits_Y = atoi(argv[6]);
-    int splits_Z = atoi(argv[7]);
     std::string label(argv[8]);
     double L_x = L, L_y = L, L_z = L;
 
@@ -40,15 +37,16 @@ int main(int argc, char **argv) {
     MPIProxy mpi(&argc, &argv);
     double startTime = mpi.time();
     int nProcessors = mpi.getNumOfProcessors();
-    if (nProcessors != splits_X * splits_Y * splits_Z) {
-        LOG_ERR << "Incorrect num of processors" << endl;
-        return 1;
+    std::vector<int> gridInBlocks = mpi.createDims(nProcessors, 3);
+    if (mpi.isMainProcess()) {
+        LOG << "Num of processors: " << nProcessors << endl;
+        LOG << "Splits: " << gridInBlocks[0] << " " << gridInBlocks[1] << " " << gridInBlocks[2] << endl;
     }
 
     Phi phi(L_x, L_y, L_z);
     U u(L_x, L_y, L_z);
 
-    Block block(&mpi, splits_X, splits_Y, splits_Z, N);
+    Block block(&mpi, gridInBlocks[0], gridInBlocks[1], gridInBlocks[2], N);
 
     Grid3D groundTruth(block.shape[0], block.shape[1], block.shape[2]);
 
@@ -69,7 +67,6 @@ int main(int argc, char **argv) {
         csvOut << label << TAB << nProcessors
                << TAB << L << TAB << T << TAB << N << TAB << K
                << TAB << L / N << TAB << T / K;
-        LOG << "Num of processors: " << nProcessors << endl;
         LOG << solver << endl;
     }
 

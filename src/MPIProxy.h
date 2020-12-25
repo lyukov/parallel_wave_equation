@@ -10,7 +10,9 @@ public:
 
     int getRank() const { return _rank; }
 
-    int getNumOfProcessors() const;
+    int getNumOfProcessors() const { return _n_proc; }
+
+    std::vector<int> createDims(int nnodes, int ndims) const;
 
     void sendVector(std::vector<double> &data, int receiver) const;
 
@@ -34,6 +36,7 @@ public:
 
 private:
     int _rank;
+    int _n_proc;
 
     MPIProxy(const MPIProxy &); // non construction-copyable
     MPIProxy &operator=(const MPIProxy &); // non copyable
