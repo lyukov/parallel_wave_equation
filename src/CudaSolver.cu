@@ -145,7 +145,8 @@ void cuda_squared_error(double *left, double *right, double *result) {
     int i, j, k;
     coords_inner(idx, i, j, k);
     int index = flat_index(i, j, k);
-    result[index] = pow(left[index] - right[index], 2);
+    double error = left[index] - right[index];
+    result[index] = error * error;
 }
 
 __device__
