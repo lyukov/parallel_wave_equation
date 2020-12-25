@@ -44,7 +44,6 @@ int main(int argc, char **argv) {
         LOG_ERR << "Incorrect num of processors" << endl;
         return 1;
     }
-    // LOG_DEBUG << "MPI Proxy created. Rank: " << mpi.getRank() << ". Processors: " << nProcessors << endl;
 
     Phi phi(L_x, L_y, L_z);
     U u(L_x, L_y, L_z);
@@ -53,10 +52,19 @@ int main(int argc, char **argv) {
 
     Grid3D groundTruth(block.shape[0], block.shape[1], block.shape[2]);
 
-    MathSolver *solver = new CudaSolver(
-            T, L_x, L_y, L_z, N, K, u, phi,
-            block.shape[0], block.shape[1], block.shape[2]
-    );
+    MathSolver *solver;
+    if (label == "cuda") {
+        solver = new CudaSolver(
+                T, L_x, L_y, L_z, N, K, u, phi,
+                block.shape[0], block.shape[1], block.shape[2]
+        );
+    } else {
+        solver = new CpuSolver(
+                T, L_x, L_y, L_z, N, K, u, phi,
+                block.shape[0], block.shape[1], block.shape[2]
+        );
+    }
+    block.setSolver(solver);
     if (mpi.isMainProcess()) {
         csvOut << label << TAB << nProcessors
                << TAB << L << TAB << T << TAB << N << TAB << K
@@ -64,7 +72,6 @@ int main(int argc, char **argv) {
         LOG << "Num of processors: " << nProcessors << endl;
         LOG << solver << endl;
     }
-    block.setSolver(solver);
 
     double error;
     for (int iter = 0; iter <= K; ++iter) {
