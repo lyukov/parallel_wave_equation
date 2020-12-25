@@ -63,7 +63,7 @@ double MPIProxy::time() const {
 }
 
 std::vector<int> MPIProxy::createDims(int nnodes, int ndims) const {
-    std::vector<int> dims(ndims, 1);
+    std::vector<int> dims(ndims, 0);
     MPI_Dims_create(nnodes, ndims, dims.data());
     return dims;
 }
