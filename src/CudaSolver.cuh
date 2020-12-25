@@ -3,6 +3,7 @@
 #include "Grid3D.h"
 #include "functions.h"
 #include "MathSolver.h"
+#include <cuda.h>
 
 class CudaSolver : public MathSolver {
 public:

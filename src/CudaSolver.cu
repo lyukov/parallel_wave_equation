@@ -3,7 +3,6 @@
 #include <thrust/device_vector.h>
 #include <thrust/copy.h>
 #include <cstdlib>
-#include <cuda.h>
 #include <cmath>
 
 #ifndef __NVCC__
@@ -212,8 +211,6 @@ CudaSolver::CudaSolver(double T, double L_x, double L_y, double L_z, int N, int 
     cudaMemcpyToSymbol(d_a_t, &u.a_t, sizeof(double));
 
     int shapeYZ = shapeY * shapeZ;
-    int shapeZ_inner = shapeZ - 2;
-    int shapeYZ_inner = (shapeY - 2) * shapeZ_inner;
     cudaMemcpyToSymbol(d_shapeYZ, &shapeYZ, sizeof(int));
     cudaMemcpyToSymbol(d_shapeZ, &shapeZ, sizeof(int));
 
