@@ -29,7 +29,7 @@ public:
 
     virtual void setZeros(int n, int index, int axis) = 0;
 
-    virtual double maxGroundTruth();
+    virtual double maxGroundTruth() = 0;
 
 protected:
     const U u;
