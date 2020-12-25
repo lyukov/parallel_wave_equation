@@ -1,4 +1,4 @@
-#include "CudaSolver.h"
+#include "CudaSolver.cuh"
 #include "utils.h"
 #include <thrust/device_vector.h>
 #include <thrust/copy.h>
@@ -190,16 +190,22 @@ void cuda_set_slice(int c0, int c1, int c2, double *slice, double *grid) {
     grid[grid_idx] = slice[slice_idx];
 }
 
+dim3 blockSizeFull;
+dim3 blockSizeInner;
+dim3 gridSizeFull;
+dim3 gridSizeInner;
+
 CudaSolver::CudaSolver(double T, double L_x, double L_y, double L_z, int N, int K, U u, Phi phi,
                        int shapeX, int shapeY, int shapeZ)
         : MathSolver(T, L_x, L_y, L_z, N, K, u, phi),
           sizeInBytes(sizeof(double) * shapeX * shapeY * shapeZ),
           flatSize(shapeX * shapeY * shapeZ),
-          gridSizeFull(1, shapeY, shapeX),
-          blockSizeFull(shapeZ),
-          gridSizeInner(1, shapeY - 2, shapeX - 2),
-          blockSizeInner(shapeZ - 2),
           grid3D(shapeX, shapeY, shapeZ) {
+
+    gridSizeFull = dim3(1, shapeY, shapeX);
+    blockSizeFull = dim3(shapeZ);
+    gridSizeInner = dim3(1, shapeY - 2, shapeX - 2);
+    blockSizeInner = dim3(shapeZ - 2);
 
     cudaMemcpyToSymbol(d_h_x, &h_x, sizeof(double));
     cudaMemcpyToSymbol(d_h_y, &h_y, sizeof(double));

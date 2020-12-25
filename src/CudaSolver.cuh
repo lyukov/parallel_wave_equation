@@ -48,10 +48,6 @@ private:
 
     const unsigned long sizeInBytes;
     const unsigned long flatSize;
-    const dim3 blockSizeFull;
-    const dim3 blockSizeInner;
-    const dim3 gridSizeFull;
-    const dim3 gridSizeInner;
 
     void getSliceParams(int axis, int &c0, int &c1, int &c2, int &gridSize, int &blockSize) const;
 };
