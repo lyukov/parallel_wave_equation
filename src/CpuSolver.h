@@ -31,6 +31,8 @@ public:
 
     void setZeros(int n, int index, int axis) override;
 
+    double maxGroundTruth() override;
+
 protected:
     const int N_GRIDS = 3;
 

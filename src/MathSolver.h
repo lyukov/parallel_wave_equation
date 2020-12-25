@@ -29,6 +29,8 @@ public:
 
     virtual void setZeros(int n, int index, int axis) = 0;
 
+    virtual double maxGroundTruth();
+
 protected:
     const U u;
     const Phi phi;

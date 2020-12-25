@@ -93,7 +93,7 @@ int Block::getNeighborId(int axis, int direction) const {
            neighbor[2];
 }
 
-double Block::printError(Grid3D &groundTruth) {
+double Block::printError() {
     //if (iteration % 10) return;
     double absoluteError = mpi->maxOverAll(
             solver->maxAbsoluteErrorInner(iteration - 1)
@@ -105,7 +105,7 @@ double Block::printError(Grid3D &groundTruth) {
     double mse = sumSquaredError / (N * N * N);
     mpi->barrier();
     double maxGt = mpi->maxOverAll(
-            max(groundTruth.getFlatten())
+            solver->maxGroundTruth()
     );
     if (mpi->isMainProcess()) {
         LOG << "Iteration: " << iteration

@@ -31,6 +31,8 @@ public:
 
     void setZeros(int n, int index, int axis) override;
 
+    double maxGroundTruth() override;
+
 private:
     double *getCurrentState(int n);
 

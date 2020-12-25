@@ -133,3 +133,7 @@ void CpuSolver::setSlice(int n, int index, int axis, std::vector<double> &slice)
 void CpuSolver::setZeros(int n, int index, int axis) {
     getCurrentState(n).setZeros(index, axis);
 }
+
+double CpuSolver::maxGroundTruth() {
+    return max(groundTruth.getFlatten());
+}

@@ -16,7 +16,7 @@ public:
 
     void makeStep();
 
-    double printError(Grid3D &groundTruth);
+    double printError();
 
     void setSolver(MathSolver* solver);
 

@@ -348,3 +348,7 @@ void CudaSolver::setZeros(int n, int index, int axis) {
 double *CudaSolver::getCurrentState(int n) {
     return d_grids[n % N_GRIDS];
 }
+
+double CudaSolver::maxGroundTruth() {
+    return thrust::reduce(thrust::device, d_groundTruth, d_groundTruth + sizeInBytes, 0.0, thrust::maximum<double>());
+}

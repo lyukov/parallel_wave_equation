@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
                 block.start[1] - 1,
                 block.start[2] - 1
         );
-        error = block.printError(groundTruth);
+        error = block.printError();
     }
 
 //    /* Save result as binary file */
