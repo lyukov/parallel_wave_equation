@@ -246,22 +246,21 @@ CudaSolver::~CudaSolver() {
 }
 
 void CudaSolver::init_0(int start_i, int start_j, int start_k) {
-    double *d_grid = d_grids[0];
     SAFE_KERNEL_CALL((cuda_init0<<<gridSizeInner, blockSizeInner>>>(
-            d_grid, start_i, start_j, start_k
+            getCurrentState(0), start_i, start_j, start_k
     )));
 }
 
 void CudaSolver::init_1() {
-    double *d_grid = d_grids[1];
-    double *d_previous = d_grids[0];
+    double *d_grid = getCurrentState(1);
+    double *d_previous = getCurrentState(0);
     SAFE_KERNEL_CALL((cuda_init1<<<gridSizeInner, blockSizeInner>>>(d_grid, d_previous)));
 }
 
 void CudaSolver::makeStepForInnerNodes(int n) {
-    double *d_grid = d_grids[n % N_GRIDS];
-    double *d_previous_1 = d_grids[(n - 1) % N_GRIDS];
-    double *d_previous_2 = d_grids[(n - 2) % N_GRIDS];
+    double *d_grid = getCurrentState(n);
+    double *d_previous_1 = getCurrentState(n - 1);
+    double *d_previous_2 = getCurrentState(n - 2);
     SAFE_KERNEL_CALL((cuda_step<<<gridSizeInner, blockSizeInner>>>(d_grid, d_previous_1, d_previous_2)));
 }
 
@@ -272,14 +271,16 @@ void CudaSolver::updateGroundTruth(int n, int start_i, int start_j, int start_k)
 }
 
 double CudaSolver::maxAbsoluteErrorInner(int n) {
-    double *d_grid = d_grids[n % N_GRIDS];
-    SAFE_KERNEL_CALL((cuda_c1<<<gridSizeInner, blockSizeInner>>>(d_grid, d_groundTruth, d_errorC1)));
+    SAFE_KERNEL_CALL((cuda_c1<<<gridSizeInner, blockSizeInner>>>(
+            getCurrentState(n), d_groundTruth, d_errorC1
+    )));
     return thrust::reduce(thrust::device, d_errorC1, d_errorC1 + flatSize, 0.0, thrust::maximum<double>());
 }
 
 double CudaSolver::sumSquaredErrorInner(int n) {
-    double *d_grid = d_grids[n % N_GRIDS];
-    SAFE_KERNEL_CALL((cuda_squared_error<<<gridSizeInner, blockSizeInner>>>(d_grid, d_groundTruth, d_errorMSE)));
+    SAFE_KERNEL_CALL((cuda_squared_error<<<gridSizeInner, blockSizeInner>>>(
+            getCurrentState(n), d_groundTruth, d_errorMSE
+    )));
     return thrust::reduce(thrust::device, d_errorMSE, d_errorMSE + flatSize, 0.0, thrust::plus<double>());
 }
 
