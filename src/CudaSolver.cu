@@ -81,9 +81,6 @@ __constant__ int d_shapeYZ;
 __constant__ int d_shapeZ;
 __constant__ int d_shapeYZ_inner;
 __constant__ int d_shapeZ_inner;
-__constant__ int d_start_i;
-__constant__ int d_start_j;
-__constant__ int d_start_k;
 __constant__ double d_tau;
 __constant__ double d_h_x;
 __constant__ double d_h_y;
@@ -162,29 +159,29 @@ double cuda_phi(double x, double y, double z) {
 }
 
 __global__
-void cuda_fillByGt(double *grid, int n) {
+void cuda_fillByGt(double *grid, int n, int start_i, int start_j, int start_k) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     int i, j, k;
     coords_full(idx, i, j, k);
     int index = flat_index(i, j, k);
     grid[index] = cuda_u(
             d_tau * n,
-            d_h_x * (d_start_i + i),
-            d_h_y * (d_start_j + j),
-            d_h_z * (d_start_k + k)
+            d_h_x * (start_i + i),
+            d_h_y * (start_j + j),
+            d_h_z * (start_k + k)
     );
 }
 
 __global__
-void cuda_init0(double *grid) {
+void cuda_init0(double *grid, int start_i, int start_j, int start_k) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     int i, j, k;
     coords_inner(idx, i, j, k);
     int index = flat_index(i, j, k);
     grid[index] = cuda_phi(
-            d_h_x * (d_start_i + i),
-            d_h_y * (d_start_j + j),
-            d_h_z * (d_start_k + k)
+            d_h_x * (start_i + i),
+            d_h_y * (start_j + j),
+            d_h_z * (start_k + k)
     );
 }
 
@@ -266,10 +263,9 @@ CudaSolver::~CudaSolver() {
 
 void CudaSolver::init_0(int start_i, int start_j, int start_k) {
     double *d_grid = d_grids[0];
-    cudaMemcpyToSymbol(d_start_i, &start_i, sizeof(int));
-    cudaMemcpyToSymbol(d_start_j, &start_j, sizeof(int));
-    cudaMemcpyToSymbol(d_start_k, &start_k, sizeof(int));
-    SAFE_KERNEL_CALL((cuda_init0<<<gridSizeInner, blockSizeInner>>>(d_grid)));
+    SAFE_KERNEL_CALL((cuda_init0<<<gridSizeInner, blockSizeInner>>>(
+            d_grid, start_i, start_j, start_k
+    )));
 }
 
 void CudaSolver::init_1() {
@@ -286,10 +282,9 @@ void CudaSolver::makeStepForInnerNodes(int n) {
 }
 
 void CudaSolver::updateGroundTruth(int n, int start_i, int start_j, int start_k) {
-    cudaMemcpyToSymbol(d_start_i, &start_i, sizeof(int));
-    cudaMemcpyToSymbol(d_start_j, &start_j, sizeof(int));
-    cudaMemcpyToSymbol(d_start_k, &start_k, sizeof(int));
-    SAFE_KERNEL_CALL((cuda_fillByGt<<<gridSizeFull, blockSizeFull>>>(d_groundTruth, n)));
+    SAFE_KERNEL_CALL((cuda_fillByGt<<<gridSizeFull, blockSizeFull>>>(
+            d_groundTruth, n, start_i, start_j, start_k
+    )));
 }
 
 double CudaSolver::maxAbsoluteErrorInner(int n) {
@@ -350,5 +345,5 @@ double *CudaSolver::getCurrentState(int n) {
 }
 
 double CudaSolver::maxGroundTruth() {
-    return thrust::reduce(thrust::device, d_groundTruth, d_groundTruth + sizeInBytes, 0.0, thrust::maximum<double>());
+    return thrust::reduce(thrust::device, d_groundTruth, d_groundTruth + flatSize, 0.0, thrust::maximum<double>());
 }
