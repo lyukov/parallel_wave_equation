@@ -29,7 +29,7 @@ int main(int argc, char **argv) {
     double T = atof(argv[2]);
     int N = atoi(argv[3]);
     int K = atoi(argv[4]);
-    std::string label(argv[8]);
+    std::string label(argv[5]);
     double L_x = L, L_y = L, L_z = L;
 
     std::stringstream csvOut;
