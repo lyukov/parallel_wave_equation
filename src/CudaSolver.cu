@@ -1,4 +1,4 @@
-#include "CudaSolver.cuh"
+#include "CudaSolver.h"
 #include "utils.h"
 #include <thrust/device_vector.h>
 #include <thrust/copy.h>

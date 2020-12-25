@@ -4,7 +4,7 @@
 #include <sstream>
 #include <cstdlib>
 
-#include "CudaSolver.cuh"
+#include "CudaSolver.h"
 #include "CpuSolver.h"
 #include "functions.h"
 #include "utils.h"

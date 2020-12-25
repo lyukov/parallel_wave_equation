@@ -18,7 +18,7 @@ add_executable(Task2
         src/CpuSolver.h
         src/Block.cpp src/Block.h
         src/MPIProxy.cpp src/MPIProxy.h
-        src/CudaSolver.cuh src/CudaSolver.cu)
+        src/CudaSolver.h src/CudaSolver.cu)
 
 #set_target_properties(
 #        Task2
