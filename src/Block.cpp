@@ -1,5 +1,6 @@
 #include "Block.h"
 #include "utils.h"
+#include <cmath>
 
 int Block::calcBlockSize(int N, int I, int splits) {
     int size = N / splits;
@@ -99,19 +100,20 @@ double Block::printError() {
             solver->maxAbsoluteErrorInner(iteration - 1)
     );
     mpi->barrier();
-    double sumSquaredError = mpi->sumOverAll(
-            solver->sumSquaredErrorInner(iteration - 1)
-    );
-    double mse = sumSquaredError / (N * N * N);
-    mpi->barrier();
-    double maxGt = mpi->maxOverAll(
-            solver->maxGroundTruth()
-    );
+//    double sumSquaredError = mpi->sumOverAll(
+//            solver->sumSquaredErrorInner(iteration - 1)
+//    );
+//    double mse = sqrt(sumSquaredError / (N * N * N));
+//    mpi->barrier();
+//    double maxGt = mpi->maxOverAll(
+//            solver->maxGroundTruth()
+//    );
     if (mpi->isMainProcess()) {
         LOG << "Iteration: " << iteration
             << ". \tC1: " << absoluteError
-            << " \tMSE: " << mse
-            << " \tMax GT: " << maxGt << endl;
+//            << " \tMSE: " << mse
+//            << " \tMax GT: " << maxGt
+            << endl;
     }
     return absoluteError;
 }
