@@ -79,8 +79,6 @@ cudaError_t *cudaConfigureCall(dim3 gridDim, dim3 blockDim, size_t sharedMem = 0
 
 __constant__ int d_shapeYZ;
 __constant__ int d_shapeZ;
-__constant__ int d_shapeYZ_inner;
-__constant__ int d_shapeZ_inner;
 __constant__ double d_tau;
 __constant__ double d_h_x;
 __constant__ double d_h_y;
@@ -100,31 +98,15 @@ double laplacian(double *g, int index) {
 }
 
 __device__
-void coords_inner(int idx, int &i, int &j, int &k) {
-    i = idx / (d_shapeYZ_inner) + 1;
-    idx %= (d_shapeYZ_inner);
-    j = idx / d_shapeZ_inner + 1;
-    k = idx % d_shapeZ_inner + 1;
-}
-
-__device__
-void coords_full(int idx, int &i, int &j, int &k) {
-    i = idx / (d_shapeYZ);
-    idx %= (d_shapeYZ);
-    j = idx / d_shapeZ;
-    k = idx % d_shapeZ;
-}
-
-__device__
 int flat_index(int i, int j, int k) {
     return i * d_shapeYZ + j * d_shapeZ + k;
 }
 
 __global__
 void cuda_step(double *grid, double *previous_1, double *previous_2) {
-    int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    int i, j, k;
-    coords_inner(idx, i, j, k);
+    int i = blockIdx.z * blockDim.z + threadIdx.z + 1;
+    int j = blockIdx.y * blockDim.y + threadIdx.y + 1;
+    int k = blockIdx.x * blockDim.x + threadIdx.x + 1;
     int index = flat_index(i, j, k);
     grid[index] = 2.0 * previous_1[index] - previous_2[index] +
                   d_tau * d_tau * laplacian(previous_1, index);
@@ -132,18 +114,18 @@ void cuda_step(double *grid, double *previous_1, double *previous_2) {
 
 __global__
 void cuda_c1(double *left, double *right, double *result) {
-    int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    int i, j, k;
-    coords_inner(idx, i, j, k);
+    int i = blockIdx.z * blockDim.z + threadIdx.z + 1;
+    int j = blockIdx.y * blockDim.y + threadIdx.y + 1;
+    int k = blockIdx.x * blockDim.x + threadIdx.x + 1;
     int index = flat_index(i, j, k);
     result[index] = abs(left[index] - right[index]);
 }
 
 __global__
 void cuda_squared_error(double *left, double *right, double *result) {
-    int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    int i, j, k;
-    coords_inner(idx, i, j, k);
+    int i = blockIdx.z * blockDim.z + threadIdx.z + 1;
+    int j = blockIdx.y * blockDim.y + threadIdx.y + 1;
+    int k = blockIdx.x * blockDim.x + threadIdx.x + 1;
     int index = flat_index(i, j, k);
     double error = left[index] - right[index];
     result[index] = error * error;
@@ -161,9 +143,9 @@ double cuda_phi(double x, double y, double z) {
 
 __global__
 void cuda_fillByGt(double *grid, int n, int start_i, int start_j, int start_k) {
-    int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    int i, j, k;
-    coords_full(idx, i, j, k);
+    int i = blockIdx.z * blockDim.z + threadIdx.z;
+    int j = blockIdx.y * blockDim.y + threadIdx.y;
+    int k = blockIdx.x * blockDim.x + threadIdx.x;
     int index = flat_index(i, j, k);
     grid[index] = cuda_u(
             d_tau * n,
@@ -175,9 +157,9 @@ void cuda_fillByGt(double *grid, int n, int start_i, int start_j, int start_k) {
 
 __global__
 void cuda_init0(double *grid, int start_i, int start_j, int start_k) {
-    int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    int i, j, k;
-    coords_inner(idx, i, j, k);
+    int i = blockIdx.z * blockDim.z + threadIdx.z + 1;
+    int j = blockIdx.y * blockDim.y + threadIdx.y + 1;
+    int k = blockIdx.x * blockDim.x + threadIdx.x + 1;
     int index = flat_index(i, j, k);
     grid[index] = cuda_phi(
             d_h_x * (start_i + i),
@@ -188,9 +170,9 @@ void cuda_init0(double *grid, int start_i, int start_j, int start_k) {
 
 __global__
 void cuda_init1(double *grid, double *previous) {
-    int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    int i, j, k;
-    coords_inner(idx, i, j, k);
+    int i = blockIdx.z * blockDim.z + threadIdx.z + 1;
+    int j = blockIdx.y * blockDim.y + threadIdx.y + 1;
+    int k = blockIdx.x * blockDim.x + threadIdx.x + 1;
     int index = flat_index(i, j, k);
     grid[index] = previous[index] + 0.5 * d_tau * d_tau * laplacian(previous, index);
 }
@@ -214,9 +196,9 @@ CudaSolver::CudaSolver(double T, double L_x, double L_y, double L_z, int N, int 
         : MathSolver(T, L_x, L_y, L_z, N, K, u, phi),
           sizeInBytes(sizeof(double) * shapeX * shapeY * shapeZ),
           flatSize(shapeX * shapeY * shapeZ),
-          gridSizeFull(shapeX * shapeY),
+          gridSizeFull(1, shapeY, shapeX),
           blockSizeFull(shapeZ),
-          gridSizeInner((shapeX - 2) * (shapeY - 2)),
+          gridSizeInner(1, shapeY - 2, shapeX - 2),
           blockSizeInner(shapeZ - 2),
           grid3D(shapeX, shapeY, shapeZ) {
 
@@ -234,8 +216,6 @@ CudaSolver::CudaSolver(double T, double L_x, double L_y, double L_z, int N, int 
     int shapeYZ_inner = (shapeY - 2) * shapeZ_inner;
     cudaMemcpyToSymbol(d_shapeYZ, &shapeYZ, sizeof(int));
     cudaMemcpyToSymbol(d_shapeZ, &shapeZ, sizeof(int));
-    cudaMemcpyToSymbol(d_shapeYZ_inner, &shapeYZ_inner, sizeof(int));
-    cudaMemcpyToSymbol(d_shapeZ_inner, &shapeZ_inner, sizeof(int));
 
     d_grids.resize(N_GRIDS);
     for (int i = 0; i < N_GRIDS; ++i) {
