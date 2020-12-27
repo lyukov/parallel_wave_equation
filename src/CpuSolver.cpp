@@ -88,6 +88,7 @@ void CpuSolver::updateGroundTruth(int n, int start_i, int start_j, int start_k) 
 double CpuSolver::maxAbsoluteErrorInner(int n) {
     Grid3D &grid = grids[n % N_GRIDS];
     double c_norm = 0;
+#pragma omp parallel for reduction(max : error)
     for (int i = 1; i < grid.shape[0] - 1; ++i) {
         for (int j = 1; j < grid.shape[1] - 1; ++j) {
             for (int k = 1; k < grid.shape[2] - 1; ++k) {
@@ -104,6 +105,7 @@ double CpuSolver::maxAbsoluteErrorInner(int n) {
 double CpuSolver::sumSquaredErrorInner(int n) {
     Grid3D &grid = grids[n % N_GRIDS];
     double sum = 0;
+#pragma omp parallel for reduction(+ : sum)
     for (int i = 1; i < grid.shape[0] - 1; ++i) {
         for (int j = 1; j < grid.shape[1] - 1; ++j) {
             for (int k = 1; k < grid.shape[2] - 1; ++k) {
@@ -135,5 +137,14 @@ void CpuSolver::setZeros(int n, int index, int axis) {
 }
 
 double CpuSolver::maxGroundTruth() {
-    return max(groundTruth.getFlatten());
+    double res = 0;
+#pragma omp parallel for reduction(max : res)
+    for (int i = 0; i < groundTruth.shape[0]; ++i) {
+        for (int j = 0; j < groundTruth.shape[1]; ++j) {
+            for (int k = 0; k < groundTruth.shape[2]; ++k) {
+                res = max(res, abs(groundTruth(i, j, k)));
+            }
+        }
+    }
+    return res;
 }

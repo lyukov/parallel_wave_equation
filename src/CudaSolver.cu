@@ -4,6 +4,7 @@
 #include <thrust/copy.h>
 #include <cstdlib>
 #include <cmath>
+#include <cuda.h>
 
 #ifndef __NVCC__
 
