@@ -88,7 +88,7 @@ void CpuSolver::updateGroundTruth(int n, int start_i, int start_j, int start_k) 
 double CpuSolver::maxAbsoluteErrorInner(int n) {
     Grid3D &grid = grids[n % N_GRIDS];
     double c_norm = 0;
-#pragma omp parallel for reduction(max : error)
+#pragma omp parallel for reduction(max : c_norm)
     for (int i = 1; i < grid.shape[0] - 1; ++i) {
         for (int j = 1; j < grid.shape[1] - 1; ++j) {
             for (int k = 1; k < grid.shape[2] - 1; ++k) {
