@@ -51,17 +51,17 @@ int main(int argc, char **argv) {
     Grid3D groundTruth(block.shape[0], block.shape[1], block.shape[2]);
 
     MathSolver *solver;
-    if (label == "cuda") {
-        solver = new CudaSolver(
-                T, L_x, L_y, L_z, N, K, u, phi,
-                block.shape[0], block.shape[1], block.shape[2]
-        );
-    } else {
-        solver = new CpuSolver(
-                T, L_x, L_y, L_z, N, K, u, phi,
-                block.shape[0], block.shape[1], block.shape[2]
-        );
-    }
+#ifdef __NVCC__
+    solver = new CudaSolver(
+            T, L_x, L_y, L_z, N, K, u, phi,
+            block.shape[0], block.shape[1], block.shape[2]
+    );
+#else
+    solver = new CpuSolver(
+            T, L_x, L_y, L_z, N, K, u, phi,
+            block.shape[0], block.shape[1], block.shape[2]
+    );
+#endif
     block.setSolver(solver);
     if (mpi.isMainProcess()) {
         csvOut << label << TAB << nProcessors
