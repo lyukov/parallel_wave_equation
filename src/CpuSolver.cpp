@@ -92,7 +92,7 @@ double CpuSolver::maxAbsoluteErrorInner(int n) {
     for (int i = 1; i < grid.shape[0] - 1; ++i) {
         for (int j = 1; j < grid.shape[1] - 1; ++j) {
             for (int k = 1; k < grid.shape[2] - 1; ++k) {
-                c_norm = max(
+                c_norm = std::max(
                         std::abs(grid(i, j, k) - groundTruth(i, j, k)),
                         c_norm
                 );
@@ -137,12 +137,12 @@ void CpuSolver::setZeros(int n, int index, int axis) {
 }
 
 double CpuSolver::maxGroundTruth() {
-    double res = 0;
+    double res = 0.0;
 #pragma omp parallel for reduction(max : res)
     for (int i = 0; i < groundTruth.shape[0]; ++i) {
         for (int j = 0; j < groundTruth.shape[1]; ++j) {
             for (int k = 0; k < groundTruth.shape[2]; ++k) {
-                res = max(res, abs(groundTruth(i, j, k)));
+                res = std::max(res, std::abs(groundTruth(i, j, k)));
             }
         }
     }
