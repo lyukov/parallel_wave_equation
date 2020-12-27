@@ -94,7 +94,7 @@ int main(int argc, char **argv) {
     mpi.barrier();
     double duration = mpi.time() - startTime;
     if (mpi.isMainProcess()) {
-        csvOut << TAB << error << TAB << duration;
+        csvOut << TAB << error << TAB << duration << TAB << getTimestamp();
         std::ofstream csvStats("stats.csv", std::ios_base::app);
         csvStats << csvOut.str() << endl;
         csvStats.close();
