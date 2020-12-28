@@ -1,4 +1,4 @@
 module load SpectrumMPI
 module load OpenMPI
-nvcc -ccbin mpicxx -std=c++11 -O3 -gencode arch=compute_52,code=sm_52 -gencode arch=compute_60,code=sm_60 \
+nvcc -ccbin mpixlC -O3 \
      src/*.cu src/*.cpp -o cuda_wave

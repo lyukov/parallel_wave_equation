@@ -101,5 +101,7 @@ int main(int argc, char **argv) {
         LOG << "All processes finished. Elapsed time (s): " << duration << endl;
     }
 
+    delete solver;
+
     return 0;
 }
