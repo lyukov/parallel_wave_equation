@@ -2,7 +2,7 @@ for L in 1.0 # 3.14
 do
     for N in 128 #256 512
     do
-        for P in 4 # 1 2 3
+        for P in 1 2 3 4
         do
         echo "source /polusfs/setenv/setup.SMPI" > $L"_"$N"_"$P".lsf"
         echo "#BSUB -n "$P >> $L"_"$N"_"$P".lsf"
