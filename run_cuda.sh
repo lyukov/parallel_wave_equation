@@ -1,5 +1,5 @@
 module load SpectrumMPI
-module load OpenMPI
+#module load OpenMPI
 
 for L in 1.0 3.14
 do
