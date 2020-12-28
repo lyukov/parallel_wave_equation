@@ -1,6 +1,6 @@
-for L in 1.0 # 3.14
+for L in 1.0 3.14
 do
-    for N in 128 #256 512
+    for N in 128 256 512
     do
         for P in 1 2 3 4
         do
