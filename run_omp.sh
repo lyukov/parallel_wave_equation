@@ -7,15 +7,11 @@ do
     do
         for P in 1 2 3 4
         do
-        echo "source /polusfs/setenv/setup.SMPI" > $L"_"$N"_"$P".lsf"
-        echo "#BSUB -n "$P >> $L"_"$N"_"$P".lsf"
-        echo "#BSUB -W 00:15" >> $L"_"$N"_"$P".lsf"
-        echo "#BSUB -o log/omp/"$L"_"$N"_"$P".out" >> $L"_"$N"_"$P".lsf"
-        echo "#BSUB -e log/omp/"$L"_"$N"_"$P".err" >> $L"_"$N"_"$P".lsf"
-        echo "#BSUB -R \"span[ptile=1]\"" >> $L"_"$N"_"$P".lsf"
-        echo "OMP_NUM_THREADS=8 mpiexec ./omp_wave "$L" 0.025 "$N" 40 omp" >> $L"_"$N"_"$P".lsf"
-        bsub < $L"_"$N"_"$P".lsf"
-        rm $L"_"$N"_"$P".lsf"
+        export OMP_NUM_THREADS=8
+        bsub -q normal -W 00:15 -x -R "span[ptile=1]" -n $P \
+             -oo log/omp/${L}_${N}_${P}.out \
+             -eo log/omp/${L}_${N}_${P}.err \
+             mpirun -n ${P} ./omp_wave $L 0.025 $N 40 omp
         done
     done
 done
