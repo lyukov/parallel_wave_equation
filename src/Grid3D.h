@@ -32,6 +32,8 @@ public:
     std::vector<double> & getFlatten();
 
     int _cfI, _cfJ; // Coefficients for indexing
+
+    void getSliceParams(int axis, int &c0, int &c1, int &c2, int &N, int &M) const;
 private:
 
     std::vector<double> raw;

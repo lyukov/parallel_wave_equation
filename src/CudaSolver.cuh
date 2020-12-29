@@ -47,6 +47,4 @@ private:
 
     const unsigned long sizeInBytes;
     const unsigned long flatSize;
-
-    void getSliceParams(int axis, int &c0, int &c1, int &c2, int &gridSize, int &blockSize) const;
 };
