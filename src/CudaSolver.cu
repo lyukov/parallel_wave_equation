@@ -291,7 +291,7 @@ int CudaSolver::getSliceSize(int axis) {
 
 std::vector<double> CudaSolver::getSlice(int n, int index, int axis) {
     int c0, c1, c2, gridSize, blockSize;
-    getSliceParams(axis, c0, c1, c2, gridSize, blockSize);
+    grid3D.getSliceParams(axis, c0, c1, c2, gridSize, blockSize);
     SAFE_KERNEL_CALL((cuda_get_slice<<<gridSize, blockSize>>>(
             c0 * index, c1, c2, d_slice, getCurrentState(n)
     )));
