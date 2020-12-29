@@ -7,7 +7,8 @@ do
     do
         for P in 1 2 3 4
         do
-        bsub -oo log/cuda/$L"_"$N"_"$P.out -eo log/cuda/$L"_"$N"_"$P.err -n $P -R "span[ptile=1]" -gpu "num=1" \
+        bsub -q normal -W 00:10 -x -R "span[ptile=1]" -gpu "num=1" -n $P \
+             -oo log/cuda/$L"_"$N"_"$P.out -eo log/cuda/$L"_"$N"_"$P.err \
              mpirun -n $P ./cuda_wave $L 0.025 $N 40 cuda
         done
     done
