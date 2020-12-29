@@ -53,10 +53,12 @@ std::vector<double> Grid3D::getSlice(int index, int axis) {
     getSliceParams(axis, c0, c1, c2, N, M);
 #pragma omp parallel for
     for (int i = 0; i < N; ++i) {
+        int idx = c0 * index + c1 * i;
+        int slice_idx = i * M;
         for (int j = 0; j < M; ++j) {
-            int idx = c0 * index + c1 * i + c2 * j;
-            int slice_idx = i * M + j;
             slice[slice_idx] = raw[idx];
+            ++slice_idx;
+            idx += c2;
         }
     }
     return slice;
@@ -67,10 +69,12 @@ void Grid3D::setSlice(int index, int axis, const std::vector<double> &slice) {
     getSliceParams(axis, c0, c1, c2, N, M);
 #pragma omp parallel for
     for (int i = 0; i < N; ++i) {
+        int idx = c0 * index + c1 * i;
+        int slice_idx = i * M;
         for (int j = 0; j < M; ++j) {
-            int idx = c0 * index + c1 * i + c2 * j;
-            int slice_idx = i * M + j;
             raw[idx] = slice[slice_idx];
+            ++slice_idx;
+            idx += c2;
         }
     }
 }
@@ -80,9 +84,10 @@ void Grid3D::setZeros(int index, int axis) {
     getSliceParams(axis, c0, c1, c2, N, M);
 #pragma omp parallel for
     for (int i = 0; i < N; ++i) {
+        int idx = c0 * index + c1 * i;
         for (int j = 0; j < M; ++j) {
-            int idx = c0 * index + c1 * i + c2 * j;
-            raw[idx] = 0.0;
+            raw[idx] = 0;
+            idx += c2;
         }
     }
 }
